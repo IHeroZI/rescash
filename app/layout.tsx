@@ -1,40 +1,29 @@
-import type { Metadata } from "next";
-import { Geist } from "next/font/google";
-import { ThemeProvider } from "next-themes";
 import "./globals.css";
-
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+import { type Metadata } from "next";
+import { Noto_Sans_Thai } from "next/font/google";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "RESCASH",
+  description: "Ordering your food",
+  icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  display: "swap",
-  subsets: ["latin"],
+// กำหนด font-family เป็น Noto Sans Thai
+const noto_sans_thai = Noto_Sans_Thai({
+  subsets: ["thai"],
+  display: "swap", // ช่วยให้โหลด font ได้เร็วขึ้น
+  variable: "--font-noto-sans-thai",
 });
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+    <html lang="th" className={noto_sans_thai.variable}>
+      <body className={`${noto_sans_thai.className} flex justify-center items-center min-h-screen bg-gray-100`}>
+        <div className="relative w-full max-w-sm h-screen overflow-hidden shadow-lg bg-white">
           {children}
-        </ThemeProvider>
+        </div>
       </body>
     </html>
   );
