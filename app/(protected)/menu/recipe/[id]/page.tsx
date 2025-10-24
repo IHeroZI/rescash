@@ -1,14 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import Image from "next/image";
 import { useMenu } from "@/lib/hooks/useMenu";
 import React from "react";
 import Header from "@/components/common/Header";
 
 export default function RecipePage({ params }: { params: { id: string } | Promise<{ id: string }> }) {
-  const router = useRouter();
   const { menus } = useMenu();
 
   // รองรับทั้งกรณี params เป็น object หรือ Promise
