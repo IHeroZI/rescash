@@ -47,16 +47,63 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  if (
-    request.nextUrl.pathname !== "/" &&
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  // Public routes that don't require authentication
+  const publicRoutes = ["/auth/login", "/auth/sign-up", "/auth/sign-up-success", "/auth/error", "/auth/confirm", "/auth/forgot-password", "/auth/update-password"];
+  const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+
+  // If no user and trying to access protected route, redirect to login
+  if (!user && !isPublicRoute && request.nextUrl.pathname !== "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
+  }
+
+  // If user is logged in, check role-based access
+  if (user) {
+    const { data: userData } = await supabase
+      .from("Users")
+      .select("role")
+      .eq("email", user.email)
+      .single();
+
+    const userRole = userData?.role;
+    const pathname = request.nextUrl.pathname;
+
+    // Role-based route access control
+    const roleRoutes: Record<string, string[]> = {
+      admin: ["/menu", "/order", "/more"],
+      staff: ["/order", "/more"],
+      customer: ["/menu", "/more"],
+    };
+
+    // Check if user is trying to access a protected route
+    const protectedRoutes = ["/menu", "/order", "/more"];
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+
+    if (isProtectedRoute && userRole) {
+      const allowedRoutes = roleRoutes[userRole as keyof typeof roleRoutes] || [];
+      
+      // If user tries to access a route they don't have permission for
+      if (!allowedRoutes.some(route => pathname.startsWith(route))) {
+        const url = request.nextUrl.clone();
+        // Redirect to the first allowed route for their role
+        url.pathname = allowedRoutes[0] || "/menu";
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // Redirect authenticated users from auth pages to their default page
+    if (isPublicRoute) {
+      const url = request.nextUrl.clone();
+      if (userRole === "admin") {
+        url.pathname = "/menu";
+      } else if (userRole === "staff") {
+        url.pathname = "/order";
+      } else {
+        url.pathname = "/menu";
+      }
+      return NextResponse.redirect(url);
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
