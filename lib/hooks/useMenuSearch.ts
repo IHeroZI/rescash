@@ -29,7 +29,6 @@ export function useMenuSearch(searchQuery: string) {
         let query = supabase
           .from("menu")
           .select("*")
-          .eq("is_available", true)
           .order("menu_id", { ascending: true });
 
         // ถ้ามีคำค้นหา ให้กรองตามชื่อเมนู

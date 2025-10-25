@@ -49,7 +49,7 @@ export default function LoginPage() {
             </div>
           )}
           
-          <div className="space-y-6">
+          <div className="space-y-4">
             <TextField
               type="email"
               name="email"
@@ -63,17 +63,7 @@ export default function LoginPage() {
               required
             />
             
-            <div className="flex items-center pb-10 px-2">
-              <input
-                id="remember"
-                name="remember"
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 accent-black text-white focus:ring-black"
-              />
-              <label htmlFor="remember" className="ml-2 block text-sm text-gray-900 pb-">
-                จดจำฉัน
-              </label>
-            </div>
+            <div className="pb-12 px-2" /> 
             
             <button
               type="submit"

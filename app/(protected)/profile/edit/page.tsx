@@ -64,7 +64,7 @@ export default function EditProfilePage() {
       toast.success("อัพโหลดรูปภาพสำเร็จ");
       refetch();
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.log("Error uploading image:", error);
       toast.error("เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ");
     } finally {
       setUploading(false);
@@ -94,7 +94,7 @@ export default function EditProfilePage() {
       refetch();
       router.push("/more");
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.log("Error updating profile:", error);
       toast.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     } finally {
       setLoading(false);

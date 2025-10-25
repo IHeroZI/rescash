@@ -104,7 +104,7 @@ export function useUser() {
         .maybeSingle();
 
       if (dbError) {
-        console.error("Database error:", dbError);
+        console.log("Database error:", dbError);
         throw dbError;
       }
       
@@ -112,7 +112,7 @@ export function useUser() {
         setUserData(data);
       }
     } catch (err) {
-      console.error("Error in refetch:", err);
+      console.log("Error in refetch:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch user");
     } finally {
       setLoading(false);

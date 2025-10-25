@@ -98,7 +98,7 @@ export async function signUp(formData: FormData) {
     });
 
     if (dbError) {
-      console.error("Error inserting user data:", dbError);
+      console.log("Error inserting user data:", dbError);
       return { error: "Failed to create user profile" };
     }
   }

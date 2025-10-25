@@ -27,7 +27,7 @@ export default function SearchBar({ value, onChange, placeholder = "ค้นห
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
-        className="w-full pl-10 pr-10 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all"
+        className="w-full pl-10 pr-2 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400 focus:bg-white transition-all"
       />
       {value && (
         <button

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Plus, ChefHat, Edit, XCircle, CheckCircle } from "lucide-react";
+import { Plus, ChefHat, Edit } from "lucide-react";
 import type { Menu } from "@/lib/hooks/useMenu";
 
 interface MenuCardProps {
@@ -10,7 +10,6 @@ interface MenuCardProps {
   onCardClick: (menu: Menu) => void;
   onRecipeClick?: (menu: Menu) => void;
   onEditClick?: (menu: Menu) => void;
-  onToggleAvailability?: (menu: Menu) => void;
 }
 
 export default function MenuCard({
@@ -19,7 +18,6 @@ export default function MenuCard({
   onCardClick,
   onRecipeClick,
   onEditClick,
-  onToggleAvailability,
 }: MenuCardProps) {
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
@@ -50,7 +48,13 @@ export default function MenuCard({
 
       {/* Menu Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-gray-900 truncate">{menu.menu_name}</h3>
+        <h3
+          className={`font-semibold truncate ${
+            menu.is_available ? "text-gray-900" : "text-red-600"
+          }`}
+        >
+          {menu.menu_name}
+        </h3>
         <p className="text-sm text-gray-600">ราคา : {menu.price} บาท</p>
       </div>
 
@@ -79,25 +83,9 @@ export default function MenuCard({
             {onEditClick && (
               <button
                 onClick={(e) => handleActionClick(e, () => onEditClick(menu))}
-                className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors"
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors"
               >
-                <Edit size={16} className="text-blue-600" />
-              </button>
-            )}
-            {onToggleAvailability && (
-              <button
-                onClick={(e) => handleActionClick(e, () => onToggleAvailability(menu))}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  menu.is_available
-                    ? "bg-red-100 hover:bg-red-200"
-                    : "bg-green-100 hover:bg-green-200"
-                }`}
-              >
-                {menu.is_available ? (
-                  <XCircle size={16} className="text-red-600" />
-                ) : (
-                  <CheckCircle size={16} className="text-green-600" />
-                )}
+                <Edit size={16} className="text-gray-800" />
               </button>
             )}
           </div>

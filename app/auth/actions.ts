@@ -71,7 +71,7 @@ export async function signUp(formData: FormData) {
     });
 
     if (dbError) {
-      console.error("Error inserting user data:", dbError);
+      console.log("Error inserting user data:", dbError);
       return { error: "มี email นี้อยู่แล้ว" };
     }
   }

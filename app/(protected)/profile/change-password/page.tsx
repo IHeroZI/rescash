@@ -56,7 +56,7 @@ if (signInError) {
       toast.success("เปลี่ยนรหัสผ่านสำเร็จ");
       router.push("/more");
     } catch (error) {
-      console.error("Error changing password:", error);
+      console.log("Error changing password:", error);
       toast.error("เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน");
     } finally {
       setLoading(false);

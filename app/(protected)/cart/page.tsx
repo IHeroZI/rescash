@@ -94,7 +94,7 @@ export default function CartPage() {
       clearCart();
       router.push("/order");
     } catch (error) {
-      console.error("Error creating order:", error);
+      console.log("Error creating order:", error);
       toast.error("เกิดข้อผิดพลาดในการสั่งอาหาร");
     } finally {
       setIsSubmitting(false);
