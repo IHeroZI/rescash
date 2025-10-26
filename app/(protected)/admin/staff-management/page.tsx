@@ -65,7 +65,7 @@ export default function StaffManagementPage() {
       <Header title="จัดการพนักงาน" 
       backHref="/more"
       />
-      <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 space-y-4 overflow-y-auto scrollbar-hide">
         
         <div className="flex gap-2 mb-4">
         <div className="flex-1">

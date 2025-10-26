@@ -37,7 +37,7 @@ export default function NavBar() {
 
   return (
     <div className="absolute left-0 right-0 bottom-0 flex justify-center pb-6 px-2">
-      <div className="flex justify-around items-center h-16 w-[90%] bg-white rounded-full border border-gray-200 shadow-md">
+      <div className="flex justify-around items-center h-16 w-[90%] bg-white/10 rounded-full border border-gray-200 shadow-md">
         {navItems.map((item, index) => {
           const isActive = pathname.startsWith(item.path);
 

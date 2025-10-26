@@ -1,54 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Bell, Search, Plus } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/hooks/useUser";
-import { createClient } from "@/lib/supabase/client";
+import { useOrders } from "@/lib/hooks/useOrders";
+import { getOrderStatusInfo } from "@/lib/utils/orderUtils";
+import Header from "@/components/common/Header";
+import SearchBar from "@/components/common/SearchBar";
+import OrderCard from "@/components/order/OrderCard";
 import NavBar from "@/components/common/NavBar";
 
-interface Order {
-  order_id: number;
-  total_amount: number;
-  order_status: string;
-  create_datetime: string;
-  public_order_id: string | null;
-}
+const filterOptions = [
+  { value: "all", label: "ทั้งหมด" },
+  { value: "awaiting_payment", label: "รอชำระเงิน" },
+  { value: "awaiting_admin_review", label: "รอตรวจสอบสลิป" },
+  { value: "order_recived", label: "รับออร์เดอร์แล้ว" },
+  { value: "preparing", label: "กำลังเตรียมอาหาร" },
+  { value: "ready_for_pickup", label: "อาหารพร้อมรับ" },
+  { value: "completed", label: "เสร็จสมบูรณ์" },
+  { value: "cancelled", label: "ยกเลิก" },
+];
 
 export default function OrderPage() {
+  const router = useRouter();
   const { userData } = useUser();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchOrders = async () => {
-      if (!userData) return;
-
-      try {
-        const supabase = createClient();
-        
-        let query = supabase
-          .from("Order")
-          .select("*")
-          .order("create_datetime", { ascending: false });
-
-        // Customer sees only their orders
-        if (userData.role === "customer") {
-          query = query.eq("user_id", userData.user_id);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-        setOrders(data || []);
-      } catch (error) {
-        console.log("Error fetching orders:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [userData]);
+  const { orders, loading } = useOrders();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("all");
 
   if (loading || !userData) {
     return (
@@ -58,69 +36,95 @@ export default function OrderPage() {
     );
   }
 
-  const role = userData.role;
+  // Filter orders by user role
+  let filteredOrders = orders;
+  if (userData.role === "customer") {
+    filteredOrders = orders.filter((order) => order.user_id === userData.user_id);
+  }
+
+  // Apply search filter
+  if (searchQuery) {
+    filteredOrders = filteredOrders.filter((order) => {
+      const user = Array.isArray(order.user) ? order.user[0] : order.user;
+      const userName = user?.name?.toLowerCase() || "";
+      const publicOrderId = order.public_order_id.toLowerCase();
+      const query = searchQuery.toLowerCase();
+      
+      return publicOrderId.includes(query) || userName.includes(query);
+    });
+  }
+
+  // Apply status filter
+  if (selectedFilter !== "all") {
+    filteredOrders = filteredOrders.filter(
+      (order) => order.order_status === selectedFilter
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-2xl font-bold">
-            {role === "admin" ? "จัดการเมนู" : role === "staff" ? "จัดการเมนู" : "ตะกร้า"}
-          </h1>
-          <Bell size={24} />
-        </div>
+    <div className="flex flex-col h-screen bg-white">
+      <Header title="คำสั่งซื้อ" showBackButton = {false} showNotificationIcon={true} />
 
+      <div className="px-4 pb-4 space-y-4">
         {/* Search */}
-        <div className="relative">
-          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="ค้นหาเมนูอาหาร"
-            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-          />
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="ค้นหาคำสั่งซื้อ หรือชื่อลูกค้า..."
+        />
+
+        {/* Filter buttons */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {filterOptions.map((option) => {
+            const statusInfo = option.value === "all" 
+              ? { color: "bg-gray-800 text-white border-gray-800" }
+              : getOrderStatusInfo(option.value);
+            
+            const isActive = selectedFilter === option.value;
+            
+            return (
+              <button
+                key={option.value}
+                onClick={() => setSelectedFilter(option.value)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                  isActive
+                    ? option.value === "all"
+                      ? "bg-gray-800 text-white"
+                      : statusInfo.color
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
 
-        {(role === "admin" || role === "staff") && (
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-sm text-gray-600">จำนวนเมนู : {orders.length}</span>
-            <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2">
-              <Plus size={20} />
-              <span>เพิ่มเมนู</span>
-            </button>
-          </div>
-        )}
+        {/* Orders count */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            พบ {filteredOrders.length} รายการ
+          </p>
+        </div>
       </div>
-
-      {/* Orders List */}
-      <div className="p-4 space-y-3">
-        {orders.length === 0 ? (
-          <div className="text-center text-gray-400 py-12">
-            ไม่มีคำสั่งซื้อ
-          </div>
-        ) : (
-          orders.map((order) => (
-            <div
-              key={order.order_id}
-              className="p-4 bg-white border border-gray-200 rounded-lg"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    Order #{order.public_order_id || order.order_id}
-                  </p>
-                  <p className="text-sm text-gray-600">{order.order_status}</p>
-                </div>
-                <p className="font-bold text-green-600">
-                  ฿{order.total_amount?.toFixed(2) || "0.00"}
-                </p>
-              </div>
-              <p className="text-xs text-gray-500">
-                {new Date(order.create_datetime).toLocaleString("th-TH")}
-              </p>
+        
+      {/* Orders List - Scrollable */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-20">
+        <div className="space-y-3">
+          {filteredOrders.length === 0 ? (
+            <div className="text-center text-gray-400 py-12">
+              ไม่มีคำสั่งซื้อ
             </div>
-          ))
-        )}
+          ) : (
+            filteredOrders.map((order) => (
+              <OrderCard
+                key={order.order_id}
+                order={order}
+                onClick={() => router.push(`/order/${order.order_id}`)}
+              />
+            ))
+          )}
+        </div>
       </div>
 
       <NavBar />

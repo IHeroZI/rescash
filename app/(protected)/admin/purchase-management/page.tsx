@@ -66,7 +66,7 @@ export default function PurchaseManagementPage() {
     <div className="flex flex-col h-screen bg-gray-50">
       <Header title="จัดการรายจ่าย" 
       backHref="/more"/>
-      <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 space-y-4 overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between">
           
           

@@ -10,8 +10,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker.css";
 import { useCartStore } from "@/lib/store/cartStore";
 import { useUser } from "@/lib/hooks/useUser";
-import { createClient } from "@/lib/supabase/client";
+import { createOrder } from "@/lib/utils/createOrder";
 import toast from "react-hot-toast";
+import Header from "@/components/common/Header";
 
 // ลงทะเบียน locale ภาษาไทย
 registerLocale("th", th);
@@ -57,42 +58,25 @@ export default function CartPage() {
     setIsSubmitting(true);
 
     try {
-      const supabase = createClient();
-
       // แปลง Date เป็น timestamp (ISO string)
       const pickupTimestamp = pickupDateTime.toISOString();
 
-      const { data: orderData, error: orderError } = await supabase
-        .from("Order")
-        .insert({
-          user_id: userData.user_id,
-          total_amount: totalPrice,
-          order_status: "รอดำเนินการ",
-          notes: notes || null,
-          pickup_datetime: pickupTimestamp,
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Create menu orders
-      const menuOrders = items.map((item) => ({
-        menu_id: item.menu_id,
-        order_id: orderData.order_id,
-        quantity: item.quantity,
-        price_at_order_time: item.price,
-      }));
-
-      const { error: menuOrderError } = await supabase
-        .from("MenuOrder")
-        .insert(menuOrders);
-
-      if (menuOrderError) throw menuOrderError;
+      // Create order with QR code and public_order_id
+      const orderId = await createOrder({
+        user_id: userData.user_id,
+        cart_items: items.map((item) => ({
+          menu_id: item.menu_id,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        total_amount: totalPrice,
+        appointment_time: pickupTimestamp,
+        notes: notes || undefined,
+      });
 
       toast.success("สั่งอาหารสำเร็จ!");
       clearCart();
-      router.push("/order");
+      router.push(`/order/${orderId}`);
     } catch (error) {
       console.log("Error creating order:", error);
       toast.error("เกิดข้อผิดพลาดในการสั่งอาหาร");
@@ -126,16 +110,10 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-white pb-32">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => router.back()}>
-          <ChevronLeft size={24} />
-        </button>
-        <h1 className="text-xl font-bold">ตะกร้า</h1>
-      </div>
-
-
+      <Header title="ตะกร้า" backHref="/menu" />
+      
       {/* Order Info: เลือกวันและเวลารับอาหาร */}
-      <div className="p-4 bg-gray-50 border-b border-gray-200">
+      <div className="p-4">
         <label className="block text-sm font-semibold text-gray-700 mb-2">
           <Calendar className="inline mr-2" size={16} />
           วันและเวลารับอาหาร
@@ -237,7 +215,7 @@ export default function CartPage() {
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="เช่น กระเป๋าไม่ใส่ในกระเพรา"
+          placeholder="เช่น ไม่ใส่ผัก"
           className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
           rows={3}
         />

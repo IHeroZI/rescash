@@ -71,7 +71,7 @@ export default function IngredientManagementPage() {
         showNotificationIcon={true}
       />
 
-      <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 space-y-4 overflow-y-auto scrollbar-hide">
         {/* Search */}
         <SearchBar
           value={searchQuery}
