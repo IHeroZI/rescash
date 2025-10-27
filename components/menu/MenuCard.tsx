@@ -24,10 +24,13 @@ export default function MenuCard({
     action();
   };
 
+  // Red border for unavailable items
+  const borderClass = !menu.is_available ? "border-l-4 border-l-red-500" : "";
+
   return (
     <div
       onClick={() => onCardClick(menu)}
-      className="flex items-center gap-3 px-1 py-3 bg-white border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+      className={`flex items-center gap-3 px-1 py-3 bg-white border-b border-gray-200 hover:bg-gray-50 cursor-pointer ${borderClass}`}
     >
       {/* Menu Image */}
       <div className="relative w-16 h-16 flex-shrink-0">

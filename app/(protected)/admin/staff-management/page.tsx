@@ -72,7 +72,7 @@ export default function StaffManagementPage() {
           <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="ค้นหาด้วยชื่อ, อีเมล หรือเบอร์โทร..."
+            placeholder="ค้นหาด้วยชื่อ หรืออีเมล"
           />
         </div>
         <button

@@ -8,6 +8,7 @@ import { useUser } from "@/lib/hooks/useUser";
 import { useOrderDetail } from "@/lib/hooks/useOrderDetail";
 import { getOrderStatusInfo, getNextStatus, canChangeStatus } from "@/lib/utils/orderUtils";
 import { createClient } from "@/lib/supabase/client";
+import { createOrderNotificationClient } from "@/lib/utils/notificationUtils";
 import Header from "@/components/common/Header";
 import StatusTimeline from "@/components/order/StatusTimeline";
 import ImageViewer from "@/components/order/ImageViewer";
@@ -31,6 +32,8 @@ export default function OrderDetailPage({
   const [updating, setUpdating] = useState(false);
 
   const handleCancelOrder = async () => {
+    if (!order) return;
+    
     try {
       setUpdating(true);
       const supabase = createClient();
@@ -45,10 +48,16 @@ export default function OrderDetailPage({
 
       if (error) throw error;
 
+      // Create notification for customer
+      const user = Array.isArray(order.user) ? order.user[0] : order.user;
+      if (user?.user_id) {
+        await createOrderNotificationClient(supabase, orderId, user.user_id, "cancelled");
+      }
+
       toast.success("ยกเลิกคำสั่งซื้อสำเร็จ");
       router.push("/order");
     } catch (error) {
-      console.error("Error cancelling order:", error);
+      console.log("Error cancelling order:", error);
       toast.error("เกิดข้อผิดพลาดในการยกเลิกคำสั่งซื้อ");
     } finally {
       setUpdating(false);
@@ -81,10 +90,26 @@ export default function OrderDetailPage({
 
       if (error) throw error;
 
+      // Create notification for customer based on new status
+      const user = Array.isArray(order.user) ? order.user[0] : order.user;
+      if (user?.user_id) {
+        const notificationTriggerMap: Record<string, "payment_confirmed" | "order_received" | "preparing" | "ready_for_pickup" | "completed"> = {
+          order_recived: "order_received",
+          preparing: "preparing",
+          ready_for_pickup: "ready_for_pickup",
+          completed: "completed",
+        };
+        
+        const trigger = notificationTriggerMap[nextStatus];
+        if (trigger) {
+          await createOrderNotificationClient(supabase, orderId, user.user_id, trigger);
+        }
+      }
+
       toast.success("เปลี่ยนสถานะสำเร็จ");
       window.location.reload();
     } catch (error) {
-      console.error("Error changing status:", error);
+      console.log("Error changing status:", error);
       toast.error("เกิดข้อผิดพลาดในการเปลี่ยนสถานะ");
     } finally {
       setUpdating(false);

@@ -28,7 +28,7 @@ export async function createOrder(data: CreateOrderData): Promise<number> {
     }
 
     // Generate public order ID
-    const publicOrderId = generatePublicOrderId();
+    const publicOrderId = await generatePublicOrderId(supabase);
 
     // Generate PromptPay QR Code with correct amount and mobile number
     const qrDataUrl = await generatePromptPayQR(data.total_amount, promptpayMobile);
@@ -87,7 +87,7 @@ export async function createOrder(data: CreateOrderData): Promise<number> {
 
     return orderData.order_id;
   } catch (error) {
-    console.error("Error creating order:", error);
+    console.log("Error creating order:", error);
     throw error;
   }
 }

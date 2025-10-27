@@ -2,7 +2,10 @@
 
 import { ChevronLeft, Bell } from "lucide-react";
 import Link from "next/link";
-import { type FC } from "react";
+import { type FC, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useNotifications } from "@/lib/hooks/useNotifications";
+import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   title: string;
@@ -17,6 +20,24 @@ const Header: FC<HeaderProps> = ({
   backHref = "/",
   showNotificationIcon = true,
 }) => {
+  const [userId, setUserId] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    fetchUser();
+  }, [supabase]);
+
+  const { unreadCount } = useNotifications(userId || undefined);
+
   return (
     <div className="relative flex w-full items-center justify-center p-4">
       {/* Back Button on the far left */}
@@ -36,8 +57,16 @@ const Header: FC<HeaderProps> = ({
       {/* Notification Icon on the far right */}
       {showNotificationIcon && (
         <div className="absolute right-4">
-          <button className="p-2">
+          <button
+            onClick={() => router.push("/notification")}
+            className="p-2 relative"
+          >
             <Bell size={24} className="text-gray-800" />
+            {unreadCount > 0 && (
+              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
         </div>
       )}

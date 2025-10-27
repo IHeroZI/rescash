@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const result = await checkPaymentTimeouts();
     return NextResponse.json(result);
   } catch (err) {
-    console.error("Cron error:", err);
+    console.log("Cron error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

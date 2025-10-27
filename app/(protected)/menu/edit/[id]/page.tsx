@@ -270,7 +270,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
         .insert(menuIngredients);
 
       if (ingredientsError) {
-        console.error("Error inserting ingredients:", ingredientsError);
+        console.log("Error inserting ingredients:", ingredientsError);
         throw ingredientsError;
       }
 

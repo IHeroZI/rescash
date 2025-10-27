@@ -1,7 +1,35 @@
-export function generatePublicOrderId(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 8);
-  return `ORD-${timestamp}-${random}`.toUpperCase();
+import { SupabaseClient } from "@supabase/supabase-js";
+
+export async function generatePublicOrderId(supabase: SupabaseClient): Promise<string> {
+  // Get current date in YYYYMMDD format
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const dateStr = `${year}${month}${day}`;
+
+  // Query today's orders to get the count
+  const startOfDay = new Date(year, now.getMonth(), now.getDate(), 0, 0, 0);
+  const endOfDay = new Date(year, now.getMonth(), now.getDate(), 23, 59, 59);
+
+  const { count, error } = await supabase
+    .from('order')
+    .select('*', { count: 'exact', head: true })
+    .gte('create_datetime', startOfDay.toISOString())
+    .lte('create_datetime', endOfDay.toISOString());
+
+  if (error) {
+    console.log('Error counting orders:', error);
+    // Fallback to timestamp-based if query fails
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substring(2, 8);
+    return `ORD-${timestamp}-${random}`.toUpperCase();
+  }
+
+  // Increment count for new order (count is 0-based)
+  const sequence = String((count || 0) + 1).padStart(3, '0');
+
+  return `ORD-${dateStr}-${sequence}`;
 }
 
 export function getOrderStatusInfo(status: string) {

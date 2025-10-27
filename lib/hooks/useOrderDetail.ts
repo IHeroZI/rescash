@@ -26,6 +26,7 @@ export interface OrderDetail {
   qr_url: string | null;
   slip_url: string | null;
   user: {
+    user_id: string; // UUID from auth
     name: string;
     phone: string;
     profile_image_url: string | null;
@@ -48,6 +49,7 @@ export function useOrderDetail(orderId: number | null) {
           .select(`
             *,
             user:user_id (
+              user_id,
               name,
               phone,
               profile_image_url

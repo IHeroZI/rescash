@@ -91,7 +91,7 @@ export default function PaymentPage({
       toast.success("ยืนยันการชำระเงินสำเร็จ");
       router.push(`/order/${orderId}`);
     } catch (error) {
-      console.error("Error confirming payment:", error);
+      console.log("Error confirming payment:", error);
       toast.error("เกิดข้อผิดพลาดในการยืนยันการชำระเงิน");
     } finally {
       setUploading(false);

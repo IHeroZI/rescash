@@ -43,7 +43,7 @@ export async function checkPaymentTimeouts() {
 
     return { success: true, cancelled: ordersToCancel.length };
   } catch (error) {
-    console.error("Error checking payment timeouts:", error);
+    console.log("Error checking payment timeouts:", error);
     return { success: false, error };
   }
 }

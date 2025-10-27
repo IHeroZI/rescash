@@ -9,9 +9,12 @@ interface IngredientCardProps {
 }
 
 export default function IngredientCard({ ingredient, onEdit }: IngredientCardProps) {
+  // Red border for unavailable ingredients
+  const borderClass = !ingredient.is_available ? "border-l-4 border-l-red-500" : "";
+
   return (
     <div
-      className={`p-4 border-b flex items-center justify-between transition-colors bg-white border-gray-200`}
+      className={`p-4 border-b flex items-center justify-between transition-colors bg-white border-gray-200 ${borderClass}`}
       
     >
       <div className="flex-1">
