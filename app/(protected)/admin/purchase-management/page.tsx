@@ -19,6 +19,7 @@ export default function PurchaseManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("active");
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<Purchase | null>(null);
@@ -38,6 +39,16 @@ export default function PurchaseManagementPage() {
   const handleViewDetail = (purchase: Purchase) => {
     setSelectedPurchase(purchase);
     setIsDetailModalOpen(true);
+  };
+
+  const handleEdit = (purchase: Purchase) => {
+    setEditingPurchase(purchase);
+    setIsFormModalOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setIsFormModalOpen(false);
+    setEditingPurchase(null);
   };
 
   const handleDelete = async (purchase: Purchase) => {
@@ -100,7 +111,10 @@ export default function PurchaseManagementPage() {
             ทั้งหมด
           </button>
           <button
-            onClick={() => setIsFormModalOpen(true)}
+            onClick={() => {
+              setEditingPurchase(null);
+              setIsFormModalOpen(true);
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             <Plus size={20} />
@@ -123,6 +137,7 @@ export default function PurchaseManagementPage() {
                 key={purchase.purchase_id}
                 purchase={purchase}
                 onViewDetail={handleViewDetail}
+                onEdit={handleEdit}
                 onDelete={(p) => setDeleteConfirm(p)}
               />
             ))}
@@ -132,8 +147,13 @@ export default function PurchaseManagementPage() {
 
       <PurchaseFormModal
         isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        onSuccess={refetch}
+        onClose={handleCloseForm}
+        onSuccess={() => {
+          refetch();
+          handleCloseForm();
+        }}
+        purchaseId={editingPurchase?.purchase_id}
+        mode={editingPurchase ? "edit" : "create"}
       />
 
       {selectedPurchase && (
@@ -144,6 +164,10 @@ export default function PurchaseManagementPage() {
             setSelectedPurchase(null);
           }}
           purchaseId={selectedPurchase.purchase_id}
+          onEdit={(purchaseId) => {
+            const purchase = purchases.find(p => p.purchase_id === purchaseId);
+            if (purchase) handleEdit(purchase);
+          }}
         />
       )}
 

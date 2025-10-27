@@ -131,7 +131,7 @@ export default function PaymentPage({
             <h3 className="text-center font-semibold text-gray-900">
               สแกน QR เพื่อโอนชำระเงิน
             </h3>
-            <div className="relative w-full max-w-sm mx-auto aspect-square bg-white p-4 border-4 border-blue-500 rounded-2xl">
+            <div className="relative w-full max-w-sm mx-auto aspect-square bg-white p-4 border-4 border-gray-200 rounded-2xl">
               <Image
                 src={order.qr_url}
                 alt="QR Code"
@@ -141,10 +141,10 @@ export default function PaymentPage({
             </div>
             <div className="text-center space-y-1">
               <p className="text-sm text-gray-600">
-                ชื่อ: <span className="font-medium">นาย ชวลิวุยี พรสีภาค</span>
+                ชื่อ: <span className="font-medium">นาย ชวัลวิทย์ พรสี่ภาค</span>
               </p>
               <p className="text-sm text-gray-600">
-                บัญชี: <span className="font-medium">xxx-x-x2786-x</span>
+                บัญชี: <span className="font-medium">xxx-x-x2785-x</span>
               </p>
               <p className="text-xs text-gray-500 mt-2">
                 เลขคำสั่งซื้อ: {order.public_order_id}

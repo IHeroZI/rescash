@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/common/Modal";
+import { Edit2 } from "lucide-react";
 
 interface PurchaseItem {
   ingredient_id: number;
@@ -15,12 +16,14 @@ interface PurchaseDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   purchaseId: number;
+  onEdit?: (purchaseId: number) => void;
 }
 
 export default function PurchaseDetailModal({
   isOpen,
   onClose,
   purchaseId,
+  onEdit,
 }: PurchaseDetailModalProps) {
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +102,7 @@ export default function PurchaseDetailModal({
     : "";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`รายละเอียดการสั่งซื้อ #${purchaseId}`}>
+    <Modal isOpen={isOpen} onClose={onClose} title={`รายละเอียดบันทึกรายจ่าย #${purchaseId}`}>
       {loading ? (
         <div className="text-center py-8">
           <p className="text-gray-500">กำลังโหลด...</p>
@@ -147,10 +150,25 @@ export default function PurchaseDetailModal({
             <div className="border-t pt-4">
               <div className="flex justify-between items-center">
                 <p className="text-lg font-bold text-gray-900">ยอดรวม</p>
-                <p className="text-xl font-bold text-blue-600">
+                <p className="text-xl font-bold text-gray-800">
                   ฿{purchaseInfo.total_amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
                 </p>
               </div>
+            </div>
+          )}
+
+          {onEdit && (
+            <div className="border-t pt-4">
+              <button
+                onClick={() => {
+                  onEdit(purchaseId);
+                  onClose();
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                <Edit2 size={18} />
+                <span>แก้ไขบันทึกรายจ่าย</span>
+              </button>
             </div>
           )}
         </div>

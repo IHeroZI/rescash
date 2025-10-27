@@ -201,12 +201,22 @@ export default function OrderDetailPage({
         {order.slip_url && (
           <div className="bg-white p-4 rounded-lg border">
             <h3 className="font-semibold text-gray-900 mb-2">หลักฐานการโอนเงิน:</h3>
-            <button
-              onClick={() => setShowImageViewer(true)}
-              className="text-blue-600 hover:underline text-sm"
-            >
-              📎 คลิกเพื่อดูสลิป
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowImageViewer(true)}
+                className="flex-1 text-gray-800 hover:underline text-sm font-medium"
+              >
+                📎 คลิกเพื่อดูสลิป
+              </button>
+              {userData.role === "customer" && order.order_status === "awaiting_admin_review" && (
+                <button
+                  onClick={() => router.push(`/order/${orderId}/payment`)}
+                  className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition-colors"
+                >
+                  แก้ไขสลิป
+                </button>
+              )}
+            </div>
           </div>
         )}
 

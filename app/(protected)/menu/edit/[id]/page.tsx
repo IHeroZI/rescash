@@ -39,6 +39,10 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
   const [quantity, setQuantity] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  // For editing existing ingredients
+  const [editingIngredientId, setEditingIngredientId] = useState<number | null>(null);
+  const [editQuantity, setEditQuantity] = useState("");
+
   useEffect(() => {
     params.then((resolvedParams) => {
       const id = parseInt(resolvedParams.id);
@@ -333,7 +337,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               value={menuName}
               onChange={(e) => setMenuName(e.target.value)}
               placeholder="กรอกชื่อเมนู"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
             />
           </div>
 
@@ -344,7 +348,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder="กรอกคำอธิบาย (ถ้ามี)"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent resize-none"
             />
           </div>
 
@@ -357,7 +361,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               placeholder="0.00"
               step="0.01"
               min="0"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
             />
           </div>
 
@@ -368,7 +372,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               onChange={(e) => setRecipe(e.target.value)}
               rows={6}
               placeholder="กรอกวิธีทำอาหารทีละขั้นตอน แยกด้วยการขึ้นบรรทัดใหม่"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent resize-none"
             />
             <p className="text-xs text-gray-500 mt-1">แต่ละขั้นตอนขึ้นบรรทัดใหม่</p>
           </div>
@@ -378,7 +382,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
             <button
               onClick={() => setIsAvailable(!isAvailable)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                isAvailable ? "bg-blue-500" : "bg-gray-300"
+                isAvailable ? "bg-gray-800" : "bg-gray-300"
               }`}
             >
               <span
@@ -409,7 +413,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               }}
               onFocus={() => setShowSuggestions(true)}
               placeholder="ค้นหาวัตถุดิบ..."
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
             />
             {showSuggestions && searchQuery && filteredIngredients.length > 0 && (
               <div className="mt-1 max-h-40 overflow-y-auto border rounded-lg bg-white shadow-lg">
@@ -445,7 +449,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               placeholder="0"
               step="0.01"
               min="0"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
             />
           </div>
 
@@ -466,20 +470,85 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               {selectedIngredients.map((item) => (
                 <div
                   key={item.ingredient_id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="p-3 bg-gray-50 rounded-lg"
                 >
-                  <div>
-                    <p className="font-medium text-gray-900">{item.ingredient_name}</p>
-                    <p className="text-sm text-gray-600">
-                      {item.quantity_required} {item.unit_of_measure}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveIngredient(item.ingredient_id)}
-                    className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
-                  >
-                    <X size={18} />
-                  </button>
+                  {editingIngredientId === item.ingredient_id ? (
+                    // Edit mode
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-900">{item.ingredient_name}</p>
+                      <div>
+                        <label className="text-xs text-gray-600">จำนวน ({item.unit_of_measure})</label>
+                        <input
+                          type="number"
+                          value={editQuantity}
+                          onChange={(e) => setEditQuantity(e.target.value)}
+                          className="w-full px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-gray-800 focus:border-transparent"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            if (!editQuantity || parseFloat(editQuantity) <= 0) {
+                              toast.error("กรุณาระบุจำนวนที่ถูกต้อง");
+                              return;
+                            }
+                            setSelectedIngredients(
+                              selectedIngredients.map((ing) =>
+                                ing.ingredient_id === item.ingredient_id
+                                  ? { ...ing, quantity_required: parseFloat(editQuantity) }
+                                  : ing
+                              )
+                            );
+                            setEditingIngredientId(null);
+                            toast.success("อัปเดตจำนวนแล้ว");
+                          }}
+                          className="flex-1 px-3 py-1 text-sm bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
+                        >
+                          บันทึก
+                        </button>
+                        <button
+                          onClick={() => setEditingIngredientId(null)}
+                          className="flex-1 px-3 py-1 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                        >
+                          ยกเลิก
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // View mode
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">{item.ingredient_name}</p>
+                        <p className="text-sm text-gray-600">
+                          {item.quantity_required} {item.unit_of_measure}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingIngredientId(item.ingredient_id);
+                            setEditQuantity(item.quantity_required.toString());
+                          }}
+                          className="p-1 text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                          title="แก้ไข"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveIngredient(item.ingredient_id)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                          title="ลบ"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

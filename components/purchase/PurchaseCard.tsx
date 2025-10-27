@@ -1,15 +1,16 @@
 "use client";
 
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2, Edit2 } from "lucide-react";
 import type { Purchase } from "@/lib/hooks/usePurchases";
 
 interface PurchaseCardProps {
   purchase: Purchase;
   onViewDetail: (purchase: Purchase) => void;
+  onEdit?: (purchase: Purchase) => void;
   onDelete: (purchase: Purchase) => void;
 }
 
-export default function PurchaseCard({ purchase, onViewDetail, onDelete }: PurchaseCardProps) {
+export default function PurchaseCard({ purchase, onViewDetail, onEdit, onDelete }: PurchaseCardProps) {
   const formattedDate = new Date(purchase.purchase_datetime).toLocaleDateString("th-TH", {
     year: "numeric",
     month: "short",
@@ -41,17 +42,29 @@ export default function PurchaseCard({ purchase, onViewDetail, onDelete }: Purch
       <div className="flex gap-2">
         <button
           onClick={() => onViewDetail(purchase)}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
         >
           <Eye size={18} />
           <span>ดูรายละเอียด</span>
         </button>
-        <button
-          onClick={() => onDelete(purchase)}
-          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-        >
-          <Trash2 size={18} />
-        </button>
+        {!purchase.is_deleted && onEdit && (
+          <button
+            onClick={() => onEdit(purchase)}
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            title="แก้ไข"
+          >
+            <Edit2 size={18} />
+          </button>
+        )}
+        {!purchase.is_deleted && (
+          <button
+            onClick={() => onDelete(purchase)}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            title="ลบ"
+          >
+            <Trash2 size={18} />
+          </button>
+        )}
       </div>
     </div>
   );

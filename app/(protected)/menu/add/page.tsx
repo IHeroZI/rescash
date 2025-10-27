@@ -241,7 +241,7 @@ export default function AddMenuPage() {
                 value={menuName}
                 onChange={(e) => setMenuName(e.target.value)}
                 placeholder="กรอกชื่อเมนู"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
               />
             </div>
 
@@ -252,7 +252,7 @@ export default function AddMenuPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 placeholder="กรอกคำอธิบาย (ถ้ามี)"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent resize-none"
               />
             </div>
 
@@ -265,7 +265,7 @@ export default function AddMenuPage() {
                 placeholder="0.00"
                 step="0.01"
                 min="0"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
               />
             </div>
 
@@ -276,7 +276,7 @@ export default function AddMenuPage() {
                 onChange={(e) => setRecipe(e.target.value)}
                 rows={6}
                 placeholder="กรอกวิธีทำอาหารทีละขั้นตอน แยกด้วยการขึ้นบรรทัดใหม่"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">แต่ละขั้นตอนขึ้นบรรทัดใหม่</p>
             </div>
@@ -298,7 +298,7 @@ export default function AddMenuPage() {
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 placeholder="ค้นหาวัตถุดิบ..."
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
               />
               {showSuggestions && searchQuery && filteredIngredients.length > 0 && (
                 <div className="mt-1 max-h-40 overflow-y-auto border rounded-lg bg-white shadow-lg">
@@ -334,7 +334,7 @@ export default function AddMenuPage() {
               placeholder="0"
               step="0.01"
               min="0"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
             />
           </div>
 
