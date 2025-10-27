@@ -222,7 +222,7 @@ export default function AddMenuPage() {
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed rounded-lg cursor-pointer hover:bg-white transition-colors">
                 <Upload size={40} className="text-gray-400 mb-2" />
                 <span className="text-gray-500">คลิกเพื่อเลือกรูปภาพ</span>
                 <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
@@ -355,7 +355,7 @@ export default function AddMenuPage() {
               {selectedIngredients.map((item) => (
                 <div
                   key={item.ingredient_id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-white rounded-lg"
                 >
                   <div>
                     <p className="font-medium text-gray-900">{item.ingredient_name}</p>
@@ -382,7 +382,7 @@ export default function AddMenuPage() {
         <button
           onClick={() => router.back()}
           disabled={saving}
-          className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-white transition-colors disabled:opacity-50"
         >
           ยกเลิก
         </button>

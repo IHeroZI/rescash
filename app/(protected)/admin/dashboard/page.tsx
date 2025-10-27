@@ -117,7 +117,7 @@ export default function AdminDashboard() {
 
   if (loading || !stats) {
     return (
-      <div className="flex flex-col h-screen bg-gray-50">
+      <div className="flex flex-col h-screen bg-white">
         <Header title="Dashboard" backHref="/admin/staff-management" showNotificationIcon={true} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-gray-600">กำลังโหลด...</div>
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
   const profitMargin = stats.totalRevenue > 0 ? ((stats.totalProfit / stats.totalRevenue) * 100).toFixed(1) : "0";
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-white">
       <Header title="Dashboard" backHref="/admin/staff-management" showNotificationIcon={true} />
 
       <div className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-6 pb-6">
@@ -272,7 +272,7 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {stats.monthlyData.map((data, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
+                  <tr key={index} className="border-b hover:bg-white">
                     <td className="py-2 px-2">{data.month}</td>
                     <td className="text-right py-2 px-2 text-green-600 font-medium">
                       ฿{data.revenue.toLocaleString("th-TH", { minimumFractionDigits: 2 })}

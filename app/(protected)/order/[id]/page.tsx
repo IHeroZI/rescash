@@ -8,7 +8,8 @@ import { useUser } from "@/lib/hooks/useUser";
 import { useOrderDetail } from "@/lib/hooks/useOrderDetail";
 import { getOrderStatusInfo, getNextStatus, canChangeStatus } from "@/lib/utils/orderUtils";
 import { createClient } from "@/lib/supabase/client";
-import { createOrderNotificationClient } from "@/lib/utils/notificationUtils";
+import { notifyOrderStatusChange } from "@/lib/utils/notificationUtils";
+import type { OrderStatus } from "@/lib/utils/notificationUtils";
 import Header from "@/components/common/Header";
 import StatusTimeline from "@/components/order/StatusTimeline";
 import ImageViewer from "@/components/order/ImageViewer";
@@ -48,11 +49,22 @@ export default function OrderDetailPage({
 
       if (error) throw error;
 
-      // Create notification for customer
-      const user = Array.isArray(order.user) ? order.user[0] : order.user;
-      if (user?.user_id) {
-        await createOrderNotificationClient(supabase, orderId, user.user_id, "cancelled");
-      }
+      // ส่ง notification ให้ทุกคนที่เกี่ยวข้อง
+      console.log("Sending cancel notifications for order:", orderId);
+      
+      const notifyResponse = await fetch("/api/notifications/order-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          newStatus: "cancelled",
+        }),
+      });
+
+      const notifyResult = await notifyResponse.json();
+      console.log("Cancel notification result:", notifyResult);
 
       toast.success("ยกเลิกคำสั่งซื้อสำเร็จ");
       router.push("/order");
@@ -90,21 +102,10 @@ export default function OrderDetailPage({
 
       if (error) throw error;
 
-      // Create notification for customer based on new status
-      const user = Array.isArray(order.user) ? order.user[0] : order.user;
-      if (user?.user_id) {
-        const notificationTriggerMap: Record<string, "payment_confirmed" | "order_received" | "preparing" | "ready_for_pickup" | "completed"> = {
-          order_recived: "order_received",
-          preparing: "preparing",
-          ready_for_pickup: "ready_for_pickup",
-          completed: "completed",
-        };
-        
-        const trigger = notificationTriggerMap[nextStatus];
-        if (trigger) {
-          await createOrderNotificationClient(supabase, orderId, user.user_id, trigger);
-        }
-      }
+      // ส่ง notification ให้ทุกคนที่เกี่ยวข้องตาม status ใหม่
+      console.log(`Sending notifications for order ${orderId}, new status: ${nextStatus}`);
+      const notifyResult = await notifyOrderStatusChange(supabase, orderId, nextStatus as OrderStatus);
+      console.log("Notification result:", notifyResult);
 
       toast.success("เปลี่ยนสถานะสำเร็จ");
       window.location.reload();
@@ -142,8 +143,8 @@ export default function OrderDetailPage({
         {/* Order Info */}
         <div className="bg-white p-4 rounded-lg border space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-lg">ORDER : {order.public_order_id}</h3>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
+            <h3 className="font-bold text-lg">{order.public_order_id}</h3>
+            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${statusInfo.color}`}>
               {statusInfo.label}
             </span>
           </div>
@@ -152,9 +153,9 @@ export default function OrderDetailPage({
             <p>วันที่สั่ง: {new Date(order.create_datetime).toLocaleString("th-TH")}</p>
             <p>อัปเดตล่าสุด: {new Date(order.update_datetime).toLocaleString("th-TH")}</p>
             <p className="font-semibold text-orange-600 mt-2">
-              วันจัดส่ง: {new Date(order.appointment_time).toLocaleString("th-TH", {
-                dateStyle: "full",
-                timeStyle: "short",
+              วันนัดรับ: {new Date(order.appointment_time).toLocaleString("th-TH", {
+                dateStyle: "long",
+                timeStyle: "medium",
               })}
             </p>
           </div>

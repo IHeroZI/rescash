@@ -46,7 +46,7 @@ export default function OrderCard({ order, onClick }: OrderCardProps) {
 
         {/* Right Column: order_status, total_amount */}
         <div className="flex flex-col items-end gap-2">
-          <span className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${statusInfo.color}`}>
+          <span className={`text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium ${statusInfo.color}`}>
             <IconComponent size={14} />
             {statusInfo.label}
           </span>

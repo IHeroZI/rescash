@@ -360,7 +360,7 @@ export default function PurchaseFormModal({
             {items.map((item) => (
               <div
                 key={item.ingredient_id}
-                className="p-3 bg-gray-50 rounded-lg"
+                className="p-3 bg-white rounded-lg"
               >
                 {editingItemId === item.ingredient_id ? (
                   // Edit mode

@@ -116,7 +116,7 @@ export default function IngredientManagementPage() {
 
           <button
             onClick={handleAdd}
-            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+            className="px-4 py-2 pl-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
           >
             <Plus size={20} />
             <span>เพิ่ม</span>

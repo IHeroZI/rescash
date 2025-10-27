@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { notifyOrderStatusChange } from "@/lib/utils/notificationUtils";
 
 export async function checkPaymentTimeouts() {
   const supabase = await createClient();
@@ -31,7 +32,7 @@ export async function checkPaymentTimeouts() {
       const { error: updateError } = await supabase
         .from("order")
         .update({
-          order_status: "cancelled",
+          order_status: "payment_timeout",
           update_datetime: now.toISOString(),
         })
         .in("order_id", ordersToCancel);
@@ -39,6 +40,12 @@ export async function checkPaymentTimeouts() {
       if (updateError) throw updateError;
 
       console.log(`Cancelled ${ordersToCancel.length} expired orders`);
+
+      // แจ้งเตือนลูกค้าและ admin สำหรับแต่ละ order ที่หมดเวลา
+      for (const orderId of ordersToCancel) {
+        console.log(`Sending timeout notification for order ${orderId}`);
+        await notifyOrderStatusChange(supabase, orderId, "payment_timeout");
+      }
     }
 
     return { success: true, cancelled: ordersToCancel.length };

@@ -8,17 +8,32 @@ import { Bell, Check, CheckCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function NotificationPage() {
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
     const fetchUser = async () => {
       const {
-        data: { user },
+        data: { user: authUser },
       } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
+      
+      console.log("[NotificationPage] Auth user:", authUser?.email);
+      
+      if (authUser?.email) {
+        // Get the internal user_id from the user table using email
+        const { data: userData, error } = await supabase
+          .from("users")
+          .select("user_id, name, email, role")
+          .eq("email", authUser.email)
+          .single();
+        
+        if (error) {
+          console.log("[NotificationPage] Error fetching user_id:", error);
+        } else if (userData) {
+          console.log("[NotificationPage] User data:", userData);
+          setUserId(userData.user_id);
+        }
       }
     };
     fetchUser();
@@ -26,9 +41,15 @@ export default function NotificationPage() {
 
   const { notifications, loading, markAsRead, markAllAsRead } = useNotifications(userId || undefined);
 
+  console.log("[NotificationPage] Current state:", {
+    userId,
+    notificationCount: notifications.length,
+    loading
+  });
+
   if (loading) {
     return (
-      <div className="flex flex-col h-screen bg-gray-50">
+      <div className="flex flex-col h-screen bg-white">
         <Header title="การแจ้งเตือน" backHref="/more" showNotificationIcon={false} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-gray-600">กำลังโหลด...</div>
@@ -38,7 +59,7 @@ export default function NotificationPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-white">
       <Header title="การแจ้งเตือน" backHref="/more" showNotificationIcon={false} />
       
       <div className="flex-1 overflow-y-auto scrollbar-hide p-4">

@@ -20,17 +20,29 @@ const Header: FC<HeaderProps> = ({
   backHref = "/",
   showNotificationIcon = true,
 }) => {
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
     const fetchUser = async () => {
       const {
-        data: { user },
+        data: { user: authUser },
       } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
+      
+      if (authUser?.email) {
+        // Get the internal user_id from the user table using email
+        const { data: userData, error } = await supabase
+          .from("users")
+          .select("user_id")
+          .eq("email", authUser.email)
+          .single();
+        
+        if (error) {
+          console.log("Error fetching user_id in Header:", error);
+        } else if (userData) {
+          setUserId(userData.user_id);
+        }
       }
     };
     fetchUser();

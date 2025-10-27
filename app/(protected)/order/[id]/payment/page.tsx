@@ -7,6 +7,7 @@ import { Upload, X } from "lucide-react";
 import { useUser } from "@/lib/hooks/useUser";
 import { useOrderDetail } from "@/lib/hooks/useOrderDetail";
 import { createClient } from "@/lib/supabase/client";
+import { notifyOrderStatusChange } from "@/lib/utils/notificationUtils";
 import Header from "@/components/common/Header";
 import ImageViewer from "@/components/order/ImageViewer";
 import toast from "react-hot-toast";
@@ -87,6 +88,11 @@ export default function PaymentPage({
         .eq("order_id", orderId);
 
       if (error) throw error;
+
+      // แจ้งเตือน admins ทุกคนให้ตรวจสอบสลิปใหม่ และแจ้งลูกค้าด้วย
+      console.log("Notifying about slip upload for order:", orderId);
+      const notifyResult = await notifyOrderStatusChange(supabase, orderId, "awaiting_admin_review");
+      console.log("Admin notification result:", notifyResult);
 
       toast.success("ยืนยันการชำระเงินสำเร็จ");
       router.push(`/order/${orderId}`);

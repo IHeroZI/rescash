@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { generatePublicOrderId } from "./orderUtils";
 import { generatePromptPayQR } from "./qrCodeGenerator";
+import { notifyOrderStatusChange } from "./notificationUtils";
 
 export interface CartItem {
   menu_id: number;
@@ -84,6 +85,10 @@ export async function createOrder(data: CreateOrderData): Promise<number> {
       .insert(menuOrders);
 
     if (menuOrdersError) throw menuOrdersError;
+
+    // แจ้งเตือนลูกค้าว่าสร้าง order สำเร็จและรอชำระเงิน
+    console.log("Sending order created notification for order:", orderData.order_id);
+    await notifyOrderStatusChange(supabase, orderData.order_id, "awaiting_payment");
 
     return orderData.order_id;
   } catch (error) {

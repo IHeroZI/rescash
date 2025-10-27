@@ -36,37 +36,37 @@ export function getOrderStatusInfo(status: string) {
   const statusMap: Record<string, { label: string; color: string; icon: string }> = {
     awaiting_payment: {
       label: "รอชำระเงิน",
-      color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+      color: "bg-yellow-50 text-yellow-700 border-2 border-yellow-400",
       icon: "Clock",
     },
     awaiting_admin_review: {
       label: "รอการตรวจสอบสลิป",
-      color: "bg-orange-100 text-orange-800 border-orange-300",
+      color: "bg-orange-50 text-orange-700 border-2 border-orange-400",
       icon: "FileSearch",
     },
     order_recived: {
       label: "รับออร์เดอร์แล้ว",
-      color: "bg-blue-100 text-blue-800 border-blue-300",
+      color: "bg-blue-50 text-blue-700 border-2 border-blue-400",
       icon: "CheckCircle",
     },
     preparing: {
       label: "กำลังเตรียมอาหาร",
-      color: "bg-purple-100 text-purple-800 border-purple-300",
+      color: "bg-purple-50 text-purple-700 border-2 border-purple-400",
       icon: "ChefHat",
     },
     ready_for_pickup: {
       label: "อาหารพร้อมรับ",
-      color: "bg-green-100 text-green-800 border-green-300",
+      color: "bg-green-50 text-green-700 border-2 border-green-400",
       icon: "ShoppingBag",
     },
     completed: {
       label: "คำสั่งซื้อเสร็จสมบูรณ์",
-      color: "bg-gray-100 text-gray-800 border-gray-300",
+      color: "bg-gray-50 text-gray-700 border-2 border-gray-400",
       icon: "CheckCheck",
     },
     cancelled: {
       label: "คำสั่งซื้อถูกยกเลิก",
-      color: "bg-red-100 text-red-800 border-red-300",
+      color: "bg-red-50 text-red-700 border-2 border-red-400",
       icon: "XCircle",
     },
   };
@@ -79,7 +79,7 @@ export function getOrderStatusTimeline(currentStatus: string) {
     { status: "awaiting_payment", label: "รอชำระเงิน" },
     { status: "awaiting_admin_review", label: "รอตรวจสอบ" },
     { status: "order_recived", label: "รับออร์เดอร์" },
-    { status: "preparing", label: "กำลังเตรียม" },
+    { status: "preparing", label: "กำลังเตรียมอาหาร" },
     { status: "ready_for_pickup", label: "พร้อมรับ" },
     { status: "completed", label: "เสร็จสมบูรณ์" },
   ];

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/hooks/useUser";
 import { useOrders } from "@/lib/hooks/useOrders";
-import { getOrderStatusInfo } from "@/lib/utils/orderUtils";
 import Header from "@/components/common/Header";
 import SearchBar from "@/components/common/SearchBar";
 import OrderCard from "@/components/order/OrderCard";
@@ -65,33 +64,49 @@ export default function OrderPage() {
     <div className="flex flex-col h-screen bg-white">
       <Header title="คำสั่งซื้อ" showBackButton = {false} showNotificationIcon={true} />
 
-      <div className="px-4 pb-4 space-y-4">
+      <div className="px-4 space-y-4">
         {/* Search */}
         <SearchBar
           value={searchQuery}
           onChange={setSearchQuery}
-          placeholder="ค้นหาคำสั่งซื้อ หรือชื่อลูกค้า..."
+          placeholder="ค้นหาคำสั่งซื้อ"
         />
 
         {/* Filter buttons */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
           {filterOptions.map((option) => {
-            const statusInfo = option.value === "all" 
-              ? { color: "bg-gray-800 text-white border-gray-800" }
-              : getOrderStatusInfo(option.value);
-            
             const isActive = selectedFilter === option.value;
+            
+            // Define active styles based on status
+            let activeClass = "";
+            if (isActive) {
+              if (option.value === "all") {
+                activeClass = "border-2 border-gray-800 text-gray-800";
+              } else if (option.value === "awaiting_payment") {
+                activeClass = "border-2 border-yellow-400 text-yellow-700";
+              } else if (option.value === "awaiting_admin_review") {
+                activeClass = "border-2 border-orange-400 text-orange-700";
+              } else if (option.value === "order_recived") {
+                activeClass = "border-2 border-blue-400 text-blue-700";
+              } else if (option.value === "preparing") {
+                activeClass = "border-2 border-purple-400 text-purple-700";
+              } else if (option.value === "ready_for_pickup") {
+                activeClass = "border-2 border-green-400 text-green-700";
+              } else if (option.value === "completed") {
+                activeClass = "border-2 border-gray-400 text-gray-700";
+              } else if (option.value === "cancelled") {
+                activeClass = "border-2 border-red-400 text-red-700";
+              }
+            }
             
             return (
               <button
                 key={option.value}
                 onClick={() => setSelectedFilter(option.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-all bg-white ${
                   isActive
-                    ? option.value === "all"
-                      ? "bg-gray-800 text-white"
-                      : statusInfo.color
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                    ? activeClass
+                    : "text-gray-600 border-2 border-gray-200 hover:border-gray-300"
                 }`}
               >
                 {option.label}
@@ -101,7 +116,7 @@ export default function OrderPage() {
         </div>
 
         {/* Orders count */}
-        <div className="flex items-center justify-between">
+        <div className="flex px-2 items-center justify-between">
           <p className="text-sm text-gray-600">
             พบ {filteredOrders.length} รายการ
           </p>
@@ -109,7 +124,7 @@ export default function OrderPage() {
       </div>
         
       {/* Orders List - Scrollable */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-20">
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-6 pb-20">
         <div className="space-y-3">
           {filteredOrders.length === 0 ? (
             <div className="text-center text-gray-400 py-12">

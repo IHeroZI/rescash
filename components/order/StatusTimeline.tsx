@@ -9,8 +9,8 @@ export default function StatusTimeline({ currentStatus }: StatusTimelineProps) {
 
   if (currentStatus === "cancelled") {
     return (
-      <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-        <p className="text-center text-red-600 font-semibold">❌ คำสั่งซื้อถูกยกเลิก</p>
+      <div className="bg-red-50 p-4 rounded-lg border-2 border-red-400">
+        <p className="text-center text-red-700 font-semibold">❌ คำสั่งซื้อถูกยกเลิก</p>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export default function StatusTimeline({ currentStatus }: StatusTimelineProps) {
               
               {/* Current indicator */}
               {'current' in item && item.current && (
-                <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">
+                <span className="text-xs px-2.5 py-1 bg-green-50 text-green-700 rounded-full font-medium border-2 border-green-400">
                   ปัจจุบัน
                 </span>
               )}

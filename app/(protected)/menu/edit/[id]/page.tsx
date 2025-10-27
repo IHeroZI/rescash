@@ -287,7 +287,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
 
   if (loading) {
     return (
-      <div className="flex flex-col h-screen bg-gray-50">
+      <div className="flex flex-col h-screen bg-white">
         <Header title="แก้ไขเมนู" backHref="/menu" showNotificationIcon={true} />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-gray-500">กำลังโหลด...</p>
@@ -297,7 +297,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-white">
       <Header title="แก้ไขเมนู" backHref="/menu" showNotificationIcon={true} />
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         <div className="p-4 space-y-6 max-w-2xl mx-auto pb-24">
@@ -470,7 +470,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               {selectedIngredients.map((item) => (
                 <div
                   key={item.ingredient_id}
-                  className="p-3 bg-gray-50 rounded-lg"
+                  className="p-3 bg-white rounded-lg"
                 >
                   {editingIngredientId === item.ingredient_id ? (
                     // Edit mode

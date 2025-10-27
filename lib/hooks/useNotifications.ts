@@ -5,14 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 
 export interface Notification {
   noti_id: number;
-  user_id: string;
+  user_id: number;
   order_id: number | null;
   message: string;
   create_datetime: string;
   is_read: boolean;
 }
 
-export function useNotifications(userId?: string) {
+export function useNotifications(userId?: number) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -20,10 +20,12 @@ export function useNotifications(userId?: string) {
 
   const fetchNotifications = async () => {
     if (!userId) {
+      console.log("[useNotifications] No userId provided");
       setLoading(false);
       return;
     }
 
+    console.log("[useNotifications] Fetching notifications for userId:", userId);
     setLoading(true);
     const { data, error } = await supabase
       .from("notification")
@@ -32,8 +34,9 @@ export function useNotifications(userId?: string) {
       .order("create_datetime", { ascending: false });
 
     if (error) {
-      console.log("Error fetching notifications:", error);
+      console.log("[useNotifications] Error fetching notifications:", error);
     } else {
+      console.log(`[useNotifications] Found ${data?.length || 0} notifications for user ${userId}:`, data);
       setNotifications(data || []);
       setUnreadCount((data || []).filter((n) => !n.is_read).length);
     }

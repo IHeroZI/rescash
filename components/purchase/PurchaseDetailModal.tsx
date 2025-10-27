@@ -127,7 +127,7 @@ export default function PurchaseDetailModal({
                 {items.map((item) => (
                   <div
                     key={item.ingredient_id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-white rounded-lg"
                   >
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">{item.ingredient_name}</p>
