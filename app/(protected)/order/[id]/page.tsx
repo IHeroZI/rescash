@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Phone, User } from "lucide-react";
 import { useUser } from "@/lib/hooks/useUser";
-import { useOrderDetail } from "@/lib/hooks/useOrderDetail";
+import { useOrderDetail, type MenuOrder } from "@/lib/hooks/useOrderDetail";
 import { getOrderStatusInfo, getNextStatus, canChangeStatus } from "@/lib/utils/orderUtils";
-import { createClient } from "@/lib/supabase/client";
 import { notifyOrderStatusChange } from "@/lib/utils/notificationUtils";
 import type { OrderStatus } from "@/lib/utils/notificationUtils";
 import Header from "@/components/common/Header";
@@ -37,33 +36,29 @@ export default function OrderDetailPage({
     
     try {
       setUpdating(true);
-      const supabase = createClient();
       
-      const { error } = await supabase
-        .from("order")
-        .update({ 
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
           order_status: "cancelled",
-          update_datetime: new Date().toISOString(),
-        })
-        .eq("order_id", orderId);
+        }),
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to cancel order');
+      }
 
       // ส่ง notification ให้ทุกคนที่เกี่ยวข้อง
       console.log("Sending cancel notifications for order:", orderId);
       
-      const notifyResponse = await fetch("/api/notifications/order-status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          orderId: orderId,
-          newStatus: "cancelled",
-        }),
-      });
-
-      const notifyResult = await notifyResponse.json();
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const notifyResult = await notifyOrderStatusChange(supabase, orderId, "cancelled");
       console.log("Cancel notification result:", notifyResult);
 
       toast.success("ยกเลิกคำสั่งซื้อสำเร็จ");
@@ -90,20 +85,27 @@ export default function OrderDetailPage({
 
     try {
       setUpdating(true);
-      const supabase = createClient();
       
-      const { error } = await supabase
-        .from("order")
-        .update({
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           order_status: nextStatus,
-          update_datetime: new Date().toISOString(),
-        })
-        .eq("order_id", orderId);
+        }),
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update order status');
+      }
 
       // ส่ง notification ให้ทุกคนที่เกี่ยวข้องตาม status ใหม่
       console.log(`Sending notifications for order ${orderId}, new status: ${nextStatus}`);
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
       const notifyResult = await notifyOrderStatusChange(supabase, orderId, nextStatus as OrderStatus);
       console.log("Notification result:", notifyResult);
 
@@ -186,15 +188,14 @@ export default function OrderDetailPage({
         <div className="bg-white p-4 rounded-lg border">
           <h3 className="font-semibold text-gray-900 mb-3">รายการอาหาร:</h3>
           <div className="space-y-3">
-            {order.menuOrders.map((item) => {
-              const menu = Array.isArray(item.menu) ? item.menu[0] : item.menu;
+            {order.items.map((item: MenuOrder) => {
               return (
-                <div key={`${item.menu_id}-${item.order_id}`} className="flex gap-3">
+                <div key={`${item.menu_id}-${order.order_id}`} className="flex gap-3">
                   <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                    {menu?.menu_image_url && (
+                    {item.menu_image_url && (
                       <Image
-                        src={menu.menu_image_url}
-                        alt={menu.menu_name}
+                        src={item.menu_image_url}
+                        alt={item.menu_name}
                         width={64}
                         height={64}
                         className="object-cover w-full h-full"
@@ -202,8 +203,8 @@ export default function OrderDetailPage({
                     )}
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">{menu?.menu_name}</p>
-                    <p className="text-sm text-gray-600">ราคา: ฿{menu?.price}</p>
+                    <p className="font-medium text-gray-900">{item.menu_name}</p>
+                    <p className="text-sm text-gray-600">ราคา: ฿{Number(item.price_at_order_time).toFixed(2)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-gray-600">x{item.quantity}</p>
@@ -250,7 +251,7 @@ export default function OrderDetailPage({
         <div className="bg-white p-4 rounded-lg border">
           <div className="flex items-center justify-between text-xl font-bold">
             <span>รวมทั้งหมด</span>
-            <span className="text-green-600">฿{order.total_amount.toFixed(2)}</span>
+            <span className="text-green-600">฿{Number(order.total_amount).toFixed(2)}</span>
           </div>
         </div>
 

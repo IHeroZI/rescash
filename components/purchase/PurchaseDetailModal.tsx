@@ -43,46 +43,40 @@ export default function PurchaseDetailModal({
   const fetchPurchaseDetails = async () => {
     try {
       setLoading(true);
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
 
-      // Fetch purchase info
-      const { data: purchaseData } = await supabase
-        .from("purchase")
-        .select("*")
-        .eq("purchase_id", purchaseId)
-        .single();
+      // Fetch purchase details via API
+      const response = await fetch(`/api/purchases/${purchaseId}`);
+      const result = await response.json();
 
-      if (purchaseData) {
-        setPurchaseInfo(purchaseData);
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch purchase details');
       }
 
-      // Fetch purchase items with ingredient details
-      const { data: itemsData } = await supabase
-        .from("purchaseIngredient")
-        .select(`
-          quantity_purchased,
-          unit_cost,
-          ingredient:ingredient_id (
-            ingredient_id,
-            ingredient_name,
-            unit_of_measure
-          )
-        `)
-        .eq("purchase_id", purchaseId);
-
-      if (itemsData) {
-        const formattedItems = itemsData.map((item) => {
-          const ing = Array.isArray(item.ingredient) ? item.ingredient[0] : item.ingredient;
-          return {
-            ingredient_id: ing.ingredient_id,
-            ingredient_name: ing.ingredient_name,
-            unit_of_measure: ing.unit_of_measure,
-            quantity: item.quantity_purchased,
-            unit_cost: item.unit_cost,
-          };
+      const purchaseData = result.data;
+      if (purchaseData) {
+        setPurchaseInfo({
+          total_amount: purchaseData.total_amount,
+          notes: purchaseData.notes,
+          purchase_datetime: purchaseData.purchase_datetime,
         });
-        setItems(formattedItems);
+
+        // Format items from API response
+        if (purchaseData.items && Array.isArray(purchaseData.items)) {
+          const formattedItems = purchaseData.items.map((item: {
+            ingredient_id: number;
+            ingredient_name: string;
+            unit_of_measure: string;
+            quantity_purchased: number;
+            unit_cost: string;
+          }) => ({
+            ingredient_id: item.ingredient_id,
+            ingredient_name: item.ingredient_name,
+            unit_of_measure: item.unit_of_measure,
+            quantity: item.quantity_purchased,
+            unit_cost: parseFloat(item.unit_cost),
+          }));
+          setItems(formattedItems);
+        }
       }
     } catch (error) {
       console.log("Error fetching purchase details:", error);

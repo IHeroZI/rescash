@@ -38,33 +38,28 @@ export default function RecipePage({ params }: { params: { id: string } | Promis
 
     const fetchIngredients = async () => {
       try {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
+        // Fetch ingredients via API
+        const response = await fetch(`/api/menus/${id}/ingredients`);
+        const result = await response.json();
 
-        const { data, error } = await supabase
-          .from("menuIngredient")
-          .select(`
-            quantity_required,
-            ingredient:ingredient_id (
-              ingredient_name,
-              unit_of_measure
-            )
-          `)
-          .eq("menu_id", Number(id));
-
-        if (error) throw error;
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to fetch ingredients');
+        }
         
-        console.log("Raw ingredients data:", data);
+        console.log("Ingredients data:", result.data);
         
-        if (data) {
-          setIngredients(data.map((item) => {
-            const ing = Array.isArray(item.ingredient) ? item.ingredient[0] : item.ingredient;
-            console.log("Processing item:", item);
-            return {
-              quantity_required: item.quantity_required,
-              ingredient: ing,
-            };
-          }));
+        if (result.success && result.data) {
+          setIngredients(result.data.map((item: {
+            quantity_required: number;
+            ingredient_name: string;
+            unit_of_measure: string;
+          }) => ({
+            quantity_required: item.quantity_required,
+            ingredient: {
+              ingredient_name: item.ingredient_name,
+              unit_of_measure: item.unit_of_measure,
+            },
+          })));
         }
       } catch (error) {
         console.log("Error fetching ingredients:", error);

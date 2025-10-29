@@ -31,17 +31,14 @@ const Header: FC<HeaderProps> = ({
       } = await supabase.auth.getUser();
       
       if (authUser?.email) {
-        // Get the internal user_id from the user table using email
-        const { data: userData, error } = await supabase
-          .from("users")
-          .select("user_id")
-          .eq("email", authUser.email)
-          .single();
+        // Get the internal user_id from the user table using email via API
+        const response = await fetch(`/api/users?email=${encodeURIComponent(authUser.email)}`);
+        const result = await response.json();
         
-        if (error) {
-          console.log("Error fetching user_id in Header:", error);
-        } else if (userData) {
-          setUserId(userData.user_id);
+        if (response.ok && result.success && result.data.length > 0) {
+          setUserId(result.data[0].user_id);
+        } else {
+          console.log("Error fetching user_id in Header:", result.error);
         }
       }
     };

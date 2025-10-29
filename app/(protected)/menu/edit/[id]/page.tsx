@@ -53,18 +53,15 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
 
   const fetchMenu = async (id: number) => {
     try {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
+      // Fetch menu data via API
+      const response = await fetch(`/api/menus/${id}`);
+      const result = await response.json();
 
-      // Fetch menu data
-      const { data: menuData, error: menuError } = await supabase
-        .from("menu")
-        .select("*")
-        .eq("menu_id", id)
-        .single();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch menu');
+      }
 
-      if (menuError) throw menuError;
-
+      const menuData = result.data;
       setMenuName(menuData.menu_name);
       setDescription(menuData.description || "");
       setPrice(menuData.price.toString());
@@ -73,31 +70,19 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
       setImagePreview(menuData.menu_image_url);
       setOriginalImageUrl(menuData.menu_image_url);
 
-      // Fetch menu ingredients
-      const { data: ingredientsData, error: ingredientsError } = await supabase
-        .from("menuIngredient")
-        .select(`
-          quantity_required,
-          ingredient:ingredient_id (
-            ingredient_id,
-            ingredient_name,
-            unit_of_measure
-          )
-        `)
-        .eq("menu_id", id);
-
-      if (ingredientsError) throw ingredientsError;
-
-      if (ingredientsData) {
-        const formattedIngredients = ingredientsData.map((item) => {
-          const ing = Array.isArray(item.ingredient) ? item.ingredient[0] : item.ingredient;
-          return {
-            ingredient_id: ing.ingredient_id,
-            ingredient_name: ing.ingredient_name,
-            unit_of_measure: ing.unit_of_measure,
-            quantity_required: item.quantity_required,
-          };
-        });
+      // Format ingredients from API response
+      if (menuData.ingredients && Array.isArray(menuData.ingredients)) {
+        const formattedIngredients = menuData.ingredients.map((item: {
+          ingredient_id: number;
+          ingredient_name: string;
+          unit_of_measure: string;
+          quantity_required: number;
+        }) => ({
+          ingredient_id: item.ingredient_id,
+          ingredient_name: item.ingredient_name,
+          unit_of_measure: item.unit_of_measure,
+          quantity_required: item.quantity_required,
+        }));
         setSelectedIngredients(formattedIngredients);
       }
     } catch (error) {
@@ -224,8 +209,6 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
 
     try {
       setSaving(true);
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
 
       // Upload new image if selected
       let imageUrl = originalImageUrl;
@@ -233,45 +216,33 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
         imageUrl = await uploadImage(imageFile);
       }
 
-      // Update menu
-      const { error: menuError } = await supabase
-        .from("menu")
-        .update({
+      // Prepare ingredients data
+      const ingredients = selectedIngredients.map((item) => ({
+        ingredient_id: item.ingredient_id,
+        quantity_required: item.quantity_required,
+      }));
+
+      // Update menu via API
+      const response = await fetch(`/api/menus/${menuId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           menu_name: menuName.trim(),
           description: description.trim() || null,
           price: parseFloat(price),
           menu_image_url: imageUrl,
           recipe: recipe.trim() || null,
           is_available: isAvailable,
-        })
-        .eq("menu_id", menuId);
+          ingredients: ingredients,
+        }),
+      });
 
-      if (menuError) throw menuError;
+      const result = await response.json();
 
-      // Delete old menu ingredients
-      const { error: deleteError } = await supabase
-        .from("menuIngredient")
-        .delete()
-        .eq("menu_id", menuId);
-
-      if (deleteError) throw deleteError;
-
-      // Insert new menu ingredients
-      const menuIngredients = selectedIngredients.map((item) => ({
-        menu_id: menuId,
-        ingredient_id: item.ingredient_id,
-        quantity_required: item.quantity_required,
-      }));
-
-      console.log("Inserting menu ingredients:", menuIngredients);
-
-      const { error: ingredientsError } = await supabase
-        .from("menuIngredient")
-        .insert(menuIngredients);
-
-      if (ingredientsError) {
-        console.log("Error inserting ingredients:", ingredientsError);
-        throw ingredientsError;
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update menu');
       }
 
       toast.success("แก้ไขเมนูสำเร็จ");

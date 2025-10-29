@@ -21,16 +21,14 @@ export default function NotificationPage() {
       console.log("[NotificationPage] Auth user:", authUser?.email);
       
       if (authUser?.email) {
-        // Get the internal user_id from the user table using email
-        const { data: userData, error } = await supabase
-          .from("users")
-          .select("user_id, name, email, role")
-          .eq("email", authUser.email)
-          .single();
+        // Get the internal user_id from the user table using email via API
+        const response = await fetch(`/api/users?email=${encodeURIComponent(authUser.email)}`);
+        const result = await response.json();
         
-        if (error) {
-          console.log("[NotificationPage] Error fetching user_id:", error);
-        } else if (userData) {
+        if (!response.ok) {
+          console.log("[NotificationPage] Error fetching user_id:", result.error);
+        } else if (result.success && result.data.length > 0) {
+          const userData = result.data[0];
           console.log("[NotificationPage] User data:", userData);
           setUserId(userData.user_id);
         }

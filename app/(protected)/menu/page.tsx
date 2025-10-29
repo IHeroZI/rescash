@@ -34,14 +34,11 @@ export default function MenuPage() {
       } = await supabase.auth.getUser();
       
       if (authUser?.email) {
-        const { data: userRecord } = await supabase
-          .from("users")
-          .select("user_id")
-          .eq("email", authUser.email)
-          .single();
+        const response = await fetch(`/api/users?email=${encodeURIComponent(authUser.email)}`);
+        const result = await response.json();
         
-        if (userRecord) {
-          setUserId(userRecord.user_id);
+        if (response.ok && result.success && result.data.length > 0) {
+          setUserId(result.data[0].user_id);
         }
       }
     };

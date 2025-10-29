@@ -40,15 +40,19 @@ export default function StaffManagementPage() {
 
   const handleDelete = async (staff: Staff) => {
     try {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
+      const response = await fetch(`/api/users/${staff.user_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: 'customer' }),
+      });
 
-      const { error } = await supabase
-        .from("users")
-        .update({ role: "customer" })
-        .eq("user_id", staff.user_id);
+      const data = await response.json();
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update staff');
+      }
 
       toast.success("ลบพนักงานสำเร็จ");
       refetch();

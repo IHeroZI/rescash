@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/common/Modal";
+import ErrorLabel from "@/components/common/ErrorLabel";
 import Image from "next/image";
 import { Upload } from "lucide-react";
+import { validateUser } from "@/lib/validation/validationSchemas";
 import toast from "react-hot-toast";
 import type { Staff } from "@/lib/hooks/useStaff";
 
@@ -26,6 +28,7 @@ export default function StaffFormModal({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isEditMode = !!staff;
 
@@ -34,9 +37,7 @@ export default function StaffFormModal({
     if (isOpen && staff) {
       setName(staff.name);
       setEmail(staff.email);
-      // รองรับทั้ง phone กับ phone_number
-      // @ts-expect-error: รองรับกรณีที่ field เป็น phone (raw จาก db)
-      setPhoneNumber(staff.phone || "");
+      setPhoneNumber(staff.phone_number || "");
       setImagePreview(staff.profile_image_url || "");
     } else if (!isOpen) {
       // Reset form
@@ -45,6 +46,7 @@ export default function StaffFormModal({
       setPhoneNumber("");
       setImageFile(null);
       setImagePreview("");
+      setErrors({});
     }
   }, [isOpen, staff]);
 
@@ -82,27 +84,35 @@ export default function StaffFormModal({
   };
 
   const handleSubmit = async () => {
-    if (!email.trim()) {
-      toast.error("กรุณาระบุอีเมล");
-      return;
-    }
-
-    // Validation for edit mode
-    if (isEditMode) {
-      if (!name.trim()) {
-        toast.error("กรุณาระบุชื่อ");
+    // Client-side validation
+    if (!isEditMode) {
+      // For adding staff, only validate email
+      if (!email || email.trim().length === 0) {
+        setErrors({ email: 'กรุณากรอกอีเมล' });
         return;
       }
-      if (!phoneNumber.trim()) {
-        toast.error("กรุณาระบุเบอร์โทรศัพท์");
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setErrors({ email: 'รูปแบบอีเมลไม่ถูกต้อง' });
+        return;
+      }
+    } else {
+      // For editing staff, validate all fields
+      const validationData = { name, email, phone: phoneNumber };
+      const validation = validateUser(validationData, true);
+      if (!validation.isValid) {
+        const errorMap: Record<string, string> = {};
+        validation.errors.forEach((error) => {
+          errorMap[error.field] = error.message;
+        });
+        setErrors(errorMap);
         return;
       }
     }
 
     try {
       setSaving(true);
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
+      setErrors({});
 
       if (isEditMode) {
         // Update existing staff
@@ -113,39 +123,62 @@ export default function StaffFormModal({
           imageUrl = await uploadImage(imageFile);
         }
 
-        const { error } = await supabase
-          .from("users")
-          .update({
-            name: name.trim(),
-            email: email.trim(),
-            phone: phoneNumber.trim(),
+        const response = await fetch(`/api/users/${staff.user_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            phone: phoneNumber,
             profile_image_url: imageUrl,
-          })
-          .eq("user_id", staff.user_id);
+          }),
+        });
 
-        if (error) throw error;
+        const result = await response.json();
+
+        if (!result.success) {
+          if (result.errors) {
+            const errorMap: Record<string, string> = {};
+            result.errors.forEach((error: { field: string; message: string }) => {
+              errorMap[error.field] = error.message;
+            });
+            setErrors(errorMap);
+          }
+          toast.error(result.error || 'เกิดข้อผิดพลาด');
+          return;
+        }
+
         toast.success("แก้ไขข้อมูลสำเร็จ");
       } else {
-        // Add new staff - Check if user exists by email
-        const { data: user, error: findError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("email", email.trim())
-          .single();
+        // Add new staff - Check if user exists by email and update role
+        const checkResponse = await fetch(`/api/users?email=${encodeURIComponent(email)}`);
+        const checkResult = await checkResponse.json();
 
-        if (findError || !user) {
+        if (!checkResult.success || !checkResult.data || checkResult.data.length === 0) {
           toast.error("ไม่พบผู้ใช้งานที่มีอีเมลนี้ในระบบ");
           setSaving(false);
           return;
         }
 
-        // Update role to staff
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({ role: "staff" })
-          .eq("user_id", user.user_id);
+        const user = checkResult.data[0];
 
-        if (updateError) throw updateError;
+        // Update role to staff
+        const updateResponse = await fetch(`/api/users/${user.user_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ role: 'staff' }),
+        });
+
+        const updateResult = await updateResponse.json();
+
+        if (!updateResult.success) {
+          toast.error(updateResult.error || 'เกิดข้อผิดพลาด');
+          return;
+        }
 
         toast.success("เพิ่มพนักงานสำเร็จ");
       }
@@ -209,10 +242,16 @@ export default function StaffFormModal({
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setErrors({ ...errors, name: '' });
+                }}
                 placeholder="กรอกชื่อ-นามสกุล"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                  errors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                }`}
               />
+              <ErrorLabel message={errors.name} />
             </div>
 
             {/* Email */}
@@ -223,11 +262,17 @@ export default function StaffFormModal({
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setErrors({ ...errors, email: '' });
+                }}
                 placeholder="example@email.com"
                 disabled={isEditMode}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                }`}
               />
+              <ErrorLabel message={errors.email} />
             </div>
 
             {/* Phone Number */}
@@ -238,10 +283,16 @@ export default function StaffFormModal({
               <input
                 type="tel"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e) => {
+                  setPhoneNumber(e.target.value);
+                  setErrors({ ...errors, phone: '' });
+                }}
                 placeholder="0812345678"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                  errors.phone ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                }`}
               />
+              <ErrorLabel message={errors.phone} />
             </div>
           </>
         ) : (
@@ -254,10 +305,16 @@ export default function StaffFormModal({
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setErrors({ ...errors, email: '' });
+                }}
                 placeholder="example@email.com"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                }`}
               />
+              <ErrorLabel message={errors.email} />
               <p className="text-xs text-gray-500 mt-1">
                 กรอกอีเมลของผู้ใช้งานที่มีอยู่ในระบบเพื่ออัปเกรดเป็นพนักงาน
               </p>

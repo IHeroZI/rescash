@@ -53,15 +53,15 @@ export default function PurchaseManagementPage() {
 
   const handleDelete = async (purchase: Purchase) => {
     try {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
+      const response = await fetch(`/api/purchases/${purchase.purchase_id}`, {
+        method: 'DELETE',
+      });
 
-      const { error } = await supabase
-        .from("purchase")
-        .update({ is_deleted: true })
-        .eq("purchase_id", purchase.purchase_id);
+      const data = await response.json();
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete purchase');
+      }
 
       toast.success("ลบการสั่งซื้อสำเร็จ");
       refetch();

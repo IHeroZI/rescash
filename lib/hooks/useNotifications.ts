@@ -27,53 +27,76 @@ export function useNotifications(userId?: number) {
 
     console.log("[useNotifications] Fetching notifications for userId:", userId);
     setLoading(true);
-    const { data, error } = await supabase
-      .from("notification")
-      .select("*")
-      .eq("user_id", userId)
-      .order("create_datetime", { ascending: false });
+    
+    try {
+      const response = await fetch(`/api/notifications?user_id=${userId}`);
+      const result = await response.json();
 
-    if (error) {
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch notifications');
+      }
+
+      const data = result.data || [];
+      console.log(`[useNotifications] Found ${data.length} notifications for user ${userId}:`, data);
+      setNotifications(data);
+      setUnreadCount(data.filter((n: Notification) => !n.is_read).length);
+    } catch (error) {
       console.log("[useNotifications] Error fetching notifications:", error);
-    } else {
-      console.log(`[useNotifications] Found ${data?.length || 0} notifications for user ${userId}:`, data);
-      setNotifications(data || []);
-      setUnreadCount((data || []).filter((n) => !n.is_read).length);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const markAsRead = async (notiId: number) => {
-    const { error } = await supabase
-      .from("notification")
-      .update({ is_read: true })
-      .eq("noti_id", notiId);
+    try {
+      const response = await fetch(`/api/notifications/${notiId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_read: true }),
+      });
 
-    if (error) {
-      console.log("Error marking notification as read:", error);
-    } else {
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to mark notification as read');
+      }
+
       // Update local state
       setNotifications((prev) =>
         prev.map((n) => (n.noti_id === notiId ? { ...n, is_read: true } : n))
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      console.log("Error marking notification as read:", error);
     }
   };
 
   const markAllAsRead = async () => {
     if (!userId) return;
 
-    const { error } = await supabase
-      .from("notification")
-      .update({ is_read: true })
-      .eq("user_id", userId)
-      .eq("is_read", false);
+    try {
+      // Mark all unread notifications as read
+      const unreadNotifications = notifications.filter((n) => !n.is_read);
+      
+      await Promise.all(
+        unreadNotifications.map((n) =>
+          fetch(`/api/notifications/${n.noti_id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ is_read: true }),
+          })
+        )
+      );
 
-    if (error) {
-      console.log("Error marking all notifications as read:", error);
-    } else {
+      // Update local state
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       setUnreadCount(0);
+    } catch (error) {
+      console.log("Error marking all notifications as read:", error);
     }
   };
 

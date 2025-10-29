@@ -53,47 +53,38 @@ export default function PurchaseFormModal({
     if (!purchaseId) return;
 
     try {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
+      // Fetch purchase data via API
+      const response = await fetch(`/api/purchases/${purchaseId}`);
+      const result = await response.json();
 
-      // Fetch purchase info
-      const { data: purchaseData } = await supabase
-        .from("purchase")
-        .select("*")
-        .eq("purchase_id", purchaseId)
-        .single();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch purchase');
+      }
 
+      const purchaseData = result.data;
       if (purchaseData) {
         setNotes(purchaseData.notes || "");
         setPurchaseDate(purchaseData.purchase_datetime);
-      }
 
-      // Fetch purchase items
-      const { data: itemsData } = await supabase
-        .from("purchaseIngredient")
-        .select(`
-          quantity_purchased,
-          unit_cost,
-          ingredient:ingredient_id (
-            ingredient_id,
-            ingredient_name,
-            unit_of_measure
-          )
-        `)
-        .eq("purchase_id", purchaseId);
-
-      if (itemsData) {
-        clearItems();
-        itemsData.forEach((item) => {
-          const ing = Array.isArray(item.ingredient) ? item.ingredient[0] : item.ingredient;
-          addItem({
-            ingredient_id: ing.ingredient_id,
-            ingredient_name: ing.ingredient_name,
-            unit_of_measure: ing.unit_of_measure,
-            quantity: item.quantity_purchased,
-            unit_cost: item.unit_cost,
+        // Process items from API response
+        if (purchaseData.items && Array.isArray(purchaseData.items)) {
+          clearItems();
+          purchaseData.items.forEach((item: {
+            ingredient_id: number;
+            ingredient_name: string;
+            unit_of_measure: string;
+            quantity_purchased: number;
+            unit_cost: string;
+          }) => {
+            addItem({
+              ingredient_id: item.ingredient_id,
+              ingredient_name: item.ingredient_name,
+              unit_of_measure: item.unit_of_measure,
+              quantity: item.quantity_purchased,
+              unit_cost: parseFloat(item.unit_cost),
+            });
           });
-        });
+        }
       }
     } catch (error) {
       console.log("Error loading purchase data:", error);
@@ -171,74 +162,58 @@ export default function PurchaseFormModal({
 
     try {
       setSaving(true);
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
 
       const totalAmount = getTotalAmount();
 
+      // Prepare items data
+      const purchaseItems = items.map((item) => ({
+        ingredient_id: item.ingredient_id,
+        quantity_purchased: item.quantity,
+        unit_cost: item.unit_cost,
+      }));
+
       if (mode === "edit" && purchaseId) {
-        // Update existing purchase
-        const { error: updateError } = await supabase
-          .from("purchase")
-          .update({
+        // Update existing purchase via API
+        const response = await fetch(`/api/purchases/${purchaseId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             total_amount: totalAmount,
             notes: notes.trim() || null,
             purchase_datetime: purchaseDate,
-          })
-          .eq("purchase_id", purchaseId);
+            items: purchaseItems,
+          }),
+        });
 
-        if (updateError) throw updateError;
+        const result = await response.json();
 
-        // Delete old purchase items
-        const { error: deleteError } = await supabase
-          .from("purchaseIngredient")
-          .delete()
-          .eq("purchase_id", purchaseId);
-
-        if (deleteError) throw deleteError;
-
-        // Insert new purchase items
-        const purchaseItems = items.map((item) => ({
-          purchase_id: purchaseId,
-          ingredient_id: item.ingredient_id,
-          quantity_purchased: item.quantity,
-          unit_cost: item.unit_cost,
-        }));
-
-        const { error: itemsError } = await supabase
-          .from("purchaseIngredient")
-          .insert(purchaseItems);
-
-        if (itemsError) throw itemsError;
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to update purchase');
+        }
 
         toast.success("แก้ไขบันทึกรายจ่ายสำเร็จ");
       } else {
-        // Create new purchase
-        const { data: purchaseData, error: purchaseError } = await supabase
-          .from("purchase")
-          .insert({
+        // Create new purchase via API
+        const response = await fetch('/api/purchases', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             total_amount: totalAmount,
             notes: notes.trim() || null,
             purchase_datetime: purchaseDate,
-          })
-          .select()
-          .single();
+            items: purchaseItems,
+          }),
+        });
 
-        if (purchaseError) throw purchaseError;
+        const result = await response.json();
 
-        // Insert purchase items
-        const purchaseItems = items.map((item) => ({
-          purchase_id: purchaseData.purchase_id,
-          ingredient_id: item.ingredient_id,
-          quantity_purchased: item.quantity,
-          unit_cost: item.unit_cost,
-        }));
-
-        const { error: itemsError } = await supabase
-          .from("purchaseIngredient")
-          .insert(purchaseItems);
-
-        if (itemsError) throw itemsError;
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to create purchase');
+        }
 
         toast.success("บันทึกการสั่งซื้อสำเร็จ");
       }

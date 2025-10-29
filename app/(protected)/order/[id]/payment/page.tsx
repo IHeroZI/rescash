@@ -77,17 +77,23 @@ export default function PaymentPage({
         slipUrl = await uploadSlip(slipFile);
       }
 
-      // Update order status
-      const { error } = await supabase
-        .from("order")
-        .update({
+      // Update order status via API
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           slip_url: slipUrl,
           order_status: "awaiting_admin_review",
-          update_datetime: new Date().toISOString(),
-        })
-        .eq("order_id", orderId);
+        }),
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update order');
+      }
 
       // แจ้งเตือน admins ทุกคนให้ตรวจสอบสลิปใหม่ และแจ้งลูกค้าด้วย
       console.log("Notifying about slip upload for order:", orderId);
@@ -164,7 +170,7 @@ export default function PaymentPage({
           <div className="flex items-center justify-between">
             <span className="text-lg font-semibold text-gray-900">รวม</span>
             <span className="text-3xl font-bold text-green-600">
-              {order.total_amount.toFixed(2)} บาท
+              {Number(order.total_amount).toFixed(2)} บาท
             </span>
           </div>
         </div>

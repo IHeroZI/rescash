@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 export interface Purchase {
   purchase_id: number;
@@ -18,14 +17,14 @@ export function usePurchases() {
 
   const fetchPurchases = async () => {
     try {
-      const supabase = createClient();
-      const { data, error: dbError } = await supabase
-        .from("purchase")
-        .select("*")
-        .order("purchase_datetime", { ascending: false });
+      const response = await fetch('/api/purchases');
+      const result = await response.json();
 
-      if (dbError) throw dbError;
-      setPurchases(data || []);
+      if (!result.success) {
+        throw new Error(result.error || 'เกิดข้อผิดพลาด');
+      }
+
+      setPurchases(result.data || []);
     } catch (err) {
       console.log("Error fetching purchases:", err);
       setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");

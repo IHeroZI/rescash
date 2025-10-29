@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 export interface Order {
   order_id: number;
@@ -26,21 +25,14 @@ export function useOrders() {
 
   const fetchOrders = async () => {
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("order")
-        .select(`
-          *,
-          user:user_id (
-            name,
-            phone,
-            profile_image_url
-          )
-        `)
-        .order("update_datetime", { ascending: false });
+      const response = await fetch('/api/orders');
+      const result = await response.json();
 
-      if (error) throw error;
-      setOrders(data || []);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch orders');
+      }
+
+      setOrders(result.data || []);
     } catch (error) {
       console.log("Error fetching orders:", error);
     } finally {

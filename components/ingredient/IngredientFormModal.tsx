@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/common/Modal";
-import { createClient } from "@/lib/supabase/client";
+import ErrorLabel from "@/components/common/ErrorLabel";
+import { validateIngredient } from "@/lib/validation/validationSchemas";
 import toast from "react-hot-toast";
 
 interface IngredientFormModalProps {
@@ -47,6 +48,7 @@ export default function IngredientFormModal({
     unit_of_measure: "กรัม",
     is_available: true,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (ingredient) {
@@ -62,46 +64,57 @@ export default function IngredientFormModal({
         is_available: true,
       });
     }
+    setErrors({});
   }, [ingredient, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.ingredient_name.trim()) {
-      toast.error("กรุณากรอกชื่อวัตถุดิบ");
+    // Client-side validation
+    const validation = validateIngredient(formData, !!ingredient);
+    if (!validation.isValid) {
+      const errorMap: Record<string, string> = {};
+      validation.errors.forEach((error) => {
+        errorMap[error.field] = error.message;
+      });
+      setErrors(errorMap);
       return;
     }
 
     setLoading(true);
+    setErrors({});
+    
     try {
-      const supabase = createClient();
+      const url = ingredient
+        ? `/api/ingredients/${ingredient.ingredient_id}`
+        : '/api/ingredients';
+      
+      const method = ingredient ? 'PUT' : 'POST';
 
-      if (ingredient) {
-        // Update
-        const { error } = await supabase
-          .from("ingredient")
-          .update({
-            ingredient_name: formData.ingredient_name.trim(),
-            unit_of_measure: formData.unit_of_measure,
-            is_available: formData.is_available,
-            update_datetime: new Date().toISOString(),
-          })
-          .eq("ingredient_id", ingredient.ingredient_id);
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-        if (error) throw error;
-        toast.success("แก้ไขวัตถุดิบสำเร็จ");
-      } else {
-        // Create
-        const { error } = await supabase.from("ingredient").insert({
-          ingredient_name: formData.ingredient_name.trim(),
-          unit_of_measure: formData.unit_of_measure,
-          is_available: formData.is_available,
-        });
+      const result = await response.json();
 
-        if (error) throw error;
-        toast.success("เพิ่มวัตถุดิบสำเร็จ");
+      if (!result.success) {
+        // Handle API validation errors
+        if (result.errors) {
+          const errorMap: Record<string, string> = {};
+          result.errors.forEach((error: { field: string; message: string }) => {
+            errorMap[error.field] = error.message;
+          });
+          setErrors(errorMap);
+        }
+        toast.error(result.error || 'เกิดข้อผิดพลาด');
+        return;
       }
 
+      toast.success(ingredient ? "แก้ไขวัตถุดิบสำเร็จ" : "เพิ่มวัตถุดิบสำเร็จ");
       onSuccess();
       onClose();
     } catch (error) {
@@ -126,12 +139,16 @@ export default function IngredientFormModal({
           <input
             type="text"
             value={formData.ingredient_name}
-            onChange={(e) =>
-              setFormData({ ...formData, ingredient_name: e.target.value })
-            }
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            onChange={(e) => {
+              setFormData({ ...formData, ingredient_name: e.target.value });
+              setErrors({ ...errors, ingredient_name: '' });
+            }}
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+              errors.ingredient_name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-black'
+            }`}
             placeholder="กรอกชื่อวัตถุดิบ"
           />
+          <ErrorLabel message={errors.ingredient_name} />
         </div>
 
         <div>
@@ -140,10 +157,13 @@ export default function IngredientFormModal({
           </label>
           <select
             value={formData.unit_of_measure}
-            onChange={(e) =>
-              setFormData({ ...formData, unit_of_measure: e.target.value })
-            }
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            onChange={(e) => {
+              setFormData({ ...formData, unit_of_measure: e.target.value });
+              setErrors({ ...errors, unit_of_measure: '' });
+            }}
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+              errors.unit_of_measure ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-black'
+            }`}
           >
             {UNITS.map((unit) => (
               <option key={unit} value={unit}>
@@ -151,6 +171,7 @@ export default function IngredientFormModal({
               </option>
             ))}
           </select>
+          <ErrorLabel message={errors.unit_of_measure} />
         </div>
 
         {ingredient && (

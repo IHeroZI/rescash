@@ -38,20 +38,16 @@ export function useUser() {
 
         setUser(authUser);
 
-        // Get user data from users table
-        const { data, error: dbError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("email", authUser.email)
-          .maybeSingle();
+        // Get user data from API
+        const response = await fetch(`/api/users?email=${encodeURIComponent(authUser.email || '')}`);
+        const result = await response.json();
 
-        if (dbError) {
-          console.log("Database error:", dbError);
-          throw dbError;
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch user data');
         }
         
-        if (data) {
-          setUserData(data);
+        if (result.data && result.data.length > 0) {
+          setUserData(result.data[0]);
         }
       } catch (err) {
         console.log("Error in useUser:", err);
@@ -97,19 +93,16 @@ export function useUser() {
 
       setUser(authUser);
 
-      const { data, error: dbError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", authUser.email)
-        .maybeSingle();
+      // Get user data from API
+      const response = await fetch(`/api/users?email=${encodeURIComponent(authUser.email || '')}`);
+      const result = await response.json();
 
-      if (dbError) {
-        console.log("Database error:", dbError);
-        throw dbError;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch user data');
       }
       
-      if (data) {
-        setUserData(data);
+      if (result.data && result.data.length > 0) {
+        setUserData(result.data[0]);
       }
     } catch (err) {
       console.log("Error in refetch:", err);

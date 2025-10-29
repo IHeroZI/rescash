@@ -51,7 +51,7 @@ export default function OrderCard({ order, onClick }: OrderCardProps) {
             {statusInfo.label}
           </span>
           <p className="font-bold text-lg text-gray-900">
-            ฿{order.total_amount.toFixed(2)}
+            ฿{Number(order.total_amount).toFixed(2)}
           </p>
         </div>
       </div>

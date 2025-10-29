@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 export interface Ingredient {
   ingredient_id: number;
@@ -17,14 +16,14 @@ export function useIngredients() {
 
   const fetchIngredients = async () => {
     try {
-      const supabase = createClient();
-      const { data, error: dbError } = await supabase
-        .from("ingredient")
-        .select("*")
-        .order("create_datetime", { ascending: false });
+      const response = await fetch('/api/ingredients');
+      const result = await response.json();
 
-      if (dbError) throw dbError;
-      setIngredients(data || []);
+      if (!result.success) {
+        throw new Error(result.error || 'เกิดข้อผิดพลาด');
+      }
+
+      setIngredients(result.data || []);
     } catch (err) {
       console.log("Error fetching ingredients:", err);
       setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");

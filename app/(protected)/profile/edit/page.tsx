@@ -53,13 +53,20 @@ export default function EditProfilePage() {
         .from("profile-images")
         .getPublicUrl(filePath);
 
-      // Update user profile
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ profile_image_url: urlData.publicUrl })
-        .eq("user_id", userData.user_id);
+      // Update user profile via API
+      const response = await fetch(`/api/users/${userData.user_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ profile_image_url: urlData.publicUrl }),
+      });
 
-      if (updateError) throw updateError;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update profile');
+      }
 
       toast.success("อัพโหลดรูปภาพสำเร็จ");
       refetch();
@@ -78,17 +85,22 @@ export default function EditProfilePage() {
     setLoading(true);
 
     try {
-      const supabase = createClient();
-
-      const { error } = await supabase
-        .from("users")
-        .update({
+      const response = await fetch(`/api/users/${userData.user_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: formData.name,
           phone: formData.phone,
-        })
-        .eq("user_id", userData.user_id);
+        }),
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update profile');
+      }
 
       toast.success("บันทึกข้อมูลสำเร็จ");
       refetch();

@@ -149,44 +149,37 @@ export default function AddMenuPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
 
       // Upload image
       const imageUrl = await uploadImage(imageFile!);
 
-      // Insert menu
-      const { data: menuData, error: menuError } = await supabase
-        .from("menu")
-        .insert({
+      // Prepare ingredients data
+      const ingredients = selectedIngredients.map((item) => ({
+        ingredient_id: item.ingredient_id,
+        quantity_required: item.quantity_required,
+      }));
+
+      // Create menu via API
+      const response = await fetch('/api/menus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           menu_name: menuName.trim(),
           description: description.trim() || null,
           price: parseFloat(price),
           menu_image_url: imageUrl,
           recipe: recipe.trim() || null,
           is_available: true,
-        })
-        .select()
-        .single();
+          ingredients: ingredients,
+        }),
+      });
 
-      if (menuError) throw menuError;
+      const result = await response.json();
 
-      // Insert menu ingredients
-      const menuIngredients = selectedIngredients.map((item) => ({
-        menu_id: menuData.menu_id,
-        ingredient_id: item.ingredient_id,
-        quantity_required: item.quantity_required,
-      }));
-
-      console.log("Inserting menu ingredients:", menuIngredients);
-
-      const { error: ingredientsError } = await supabase
-        .from("menuIngredient")
-        .insert(menuIngredients);
-
-      if (ingredientsError) {
-        console.log("Error inserting ingredients:", ingredientsError);
-        throw ingredientsError;
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create menu');
       }
 
       toast.success("เพิ่มเมนูสำเร็จ");

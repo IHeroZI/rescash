@@ -1,16 +1,11 @@
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 export interface MenuOrder {
   menu_id: number;
-  order_id: number;
+  menu_name: string;
   quantity: number;
   price_at_order_time: number;
-  menu: {
-    menu_name: string;
-    price: number;
-    menu_image_url: string;
-  };
+  menu_image_url: string | null;
 }
 
 export interface OrderDetail {
@@ -25,74 +20,47 @@ export interface OrderDetail {
   notes: string | null;
   qr_url: string | null;
   slip_url: string | null;
-  user: {
-    user_id: string; // UUID from auth
+  user?: {
     name: string;
     phone: string;
+    email: string;
     profile_image_url: string | null;
   };
-  menuOrders: MenuOrder[];
+  items: MenuOrder[];
 }
 
 export function useOrderDetail(orderId: number | null) {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!orderId) return;
+  const fetchOrder = async () => {
+    if (!orderId) {
+      setLoading(false);
+      return;
+    }
     
-    const fetchOrder = async () => {
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from("order")
-          .select(`
-            *,
-            user:user_id (
-              user_id,
-              name,
-              phone,
-              profile_image_url
-            )
-          `)
-          .eq("order_id", orderId)
-          .single();
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/orders/${orderId}`);
+      const result = await response.json();
 
-        if (error) throw error;
-
-        // Fetch menu orders
-        const { data: menuOrdersData, error: menuOrdersError } = await supabase
-          .from("menuOrder")
-          .select(`
-            *,
-            menu:menu_id (
-              menu_name,
-              price,
-              menu_image_url
-            )
-          `)
-          .eq("order_id", orderId);
-
-        if (menuOrdersError) throw menuOrdersError;
-
-        setOrder({
-          ...data,
-          menuOrders: menuOrdersData || [],
-        });
-      } catch (error) {
-        console.log("Error fetching order detail:", error);
-      } finally {
-        setLoading(false);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch order');
       }
-    };
 
+      setOrder(result.data);
+    } catch (error) {
+      console.log("Error fetching order detail:", error);
+      setOrder(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchOrder();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
-  return { order, loading, refetch: () => {
-    if (orderId) {
-      setLoading(true);
-      // Trigger re-fetch by changing state
-    }
-  } };
+  return { order, loading, refetch: fetchOrder };
 }

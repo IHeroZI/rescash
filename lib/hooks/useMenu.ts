@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 export interface Menu {
   menu_id: number;
@@ -23,19 +22,14 @@ export function useMenu() {
   useEffect(() => {
     const fetchMenus = async () => {
       try {
-        const supabase = createClient();
-        
-        const { data, error: dbError } = await supabase
-          .from("menu")
-          .select("*")
-          .order("create_datetime", { ascending: false });
+        const response = await fetch('/api/menus');
+        const result = await response.json();
 
-        if (dbError) {
-          console.log("Database error:", dbError);
-          throw dbError;
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch menus');
         }
         
-        setMenus(data || []);
+        setMenus(result.data || []);
       } catch (err) {
         console.log("Error in useMenu:", err);
         setError(err instanceof Error ? err.message : "Failed to fetch menus");
@@ -52,18 +46,14 @@ export function useMenu() {
     setError(null);
     
     try {
-      const supabase = createClient();
-      const { data, error: dbError } = await supabase
-        .from("menu")
-        .select("*")
-        .order("create_datetime", { ascending: false });
+      const response = await fetch('/api/menus');
+      const result = await response.json();
 
-      if (dbError) {
-        console.log("Database error:", dbError);
-        throw dbError;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch menus');
       }
       
-      setMenus(data || []);
+      setMenus(result.data || []);
     } catch (err) {
       console.log("Error in refetch:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch menus");
