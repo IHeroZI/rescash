@@ -110,11 +110,14 @@ export async function GET(
   }
 }
 
-// PUT /api/purchases/[purchaseId] - Update a purchase
+// PUT /api/purchases/[purchaseId] - Update a purchase with items
 export async function PUT(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  const pool = getDbPool();
+  const client = await pool.connect();
+
   try {
     const { purchaseId } = await params;
     const purchaseIdNum = parseInt(purchaseId);
@@ -130,7 +133,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { total_amount, notes, purchase_datetime, is_deleted } = body;
+    const { total_amount, notes, purchase_datetime, is_deleted, items } = body;
 
     // Check if purchase exists
     const existingPurchase = await queryDbSingle<PurchaseRow>(
@@ -148,7 +151,10 @@ export async function PUT(
       );
     }
 
-    // Build update query dynamically
+    // Start transaction
+    await client.query('BEGIN');
+
+    // Build update query dynamically for purchase table
     const updates: string[] = [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const values: any[] = [];
@@ -188,9 +194,31 @@ export async function PUT(
       RETURNING purchase_id, total_amount, notes, purchase_datetime, is_deleted, create_datetime, update_datetime
     `;
 
-    const pool = getDbPool();
-    const result = await pool.query(query, values);
+    const result = await client.query(query, values);
     const updatedPurchase = result.rows[0] as PurchaseRow;
+
+    // Update purchase ingredients if provided
+    if (items !== undefined && Array.isArray(items)) {
+      // Delete old items
+      await client.query(
+        'DELETE FROM "purchaseIngredient" WHERE purchase_id = $1',
+        [purchaseIdNum]
+      );
+
+      // Insert new items
+      if (items.length > 0) {
+        for (const item of items) {
+          await client.query(
+            `INSERT INTO "purchaseIngredient" (purchase_id, ingredient_id, quantity_purchased, unit_cost)
+             VALUES ($1, $2, $3, $4)`,
+            [purchaseIdNum, item.ingredient_id, item.quantity_purchased, item.unit_cost]
+          );
+        }
+      }
+    }
+
+    // Commit transaction
+    await client.query('COMMIT');
 
     return NextResponse.json({
       success: true,
@@ -198,6 +226,7 @@ export async function PUT(
       message: 'อัปเดตการซื้อสำเร็จ'
     });
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error updating purchase:', error);
     return NextResponse.json(
       {
@@ -206,6 +235,8 @@ export async function PUT(
       },
       { status: 500 }
     );
+  } finally {
+    client.release();
   }
 }
 
