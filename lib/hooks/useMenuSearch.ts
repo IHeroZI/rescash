@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 export interface Menu {
   menu_id: number;
@@ -24,25 +23,22 @@ export function useMenuSearch(searchQuery: string) {
       setError(null);
 
       try {
-        const supabase = createClient();
-
-        let query = supabase
-          .from("menu")
-          .select("*")
-          .order("menu_id", { ascending: true });
-
-        // ถ้ามีคำค้นหา ให้กรองตามชื่อเมนู
+        // สร้าง URL สำหรับ API call
+        const params = new URLSearchParams();
         if (searchQuery.trim()) {
-          query = query.ilike("menu_name", `%${searchQuery}%`);
+          params.append('search', searchQuery.trim());
         }
 
-        const { data, error: fetchError } = await query;
+        const url = `/api/menus${params.toString() ? `?${params.toString()}` : ''}`;
+        
+        const response = await fetch(url);
+        const result = await response.json();
 
-        if (fetchError) {
-          throw fetchError;
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'เกิดข้อผิดพลาดในการดึงข้อมูล');
         }
 
-        setMenus(data || []);
+        setMenus(result.data || []);
       } catch (err) {
         console.log("Error searching menus:", err);
         setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");

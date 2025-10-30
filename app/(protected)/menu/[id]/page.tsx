@@ -12,7 +12,7 @@ import Header from "@/components/common/Header";
 
 export default function MenuDetailPage({ params }: { params: { id: string } | Promise<{ id: string }> }) {
   const router = useRouter();
-  const { menus } = useMenu();
+  const { menus, loading } = useMenu();
   const addItem = useCartStore((state) => state.addItem);
   const [quantity, setQuantity] = useState(1);
 
@@ -34,7 +34,7 @@ export default function MenuDetailPage({ params }: { params: { id: string } | Pr
     return () => { cancelled = true; };
   }, [params]);
 
-  if (!id) {
+  if (!id || loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-gray-400">กำลังโหลด...</div>
