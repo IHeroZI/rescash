@@ -8,6 +8,8 @@ import { useUser } from "@/lib/hooks/useUser";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import TextField from "@/components/common/TextField";
+import ErrorLabel from "@/components/common/ErrorLabel";
+import { validateProfileEdit } from "@/lib/validation/validationSchemas";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -19,6 +21,7 @@ export default function EditProfilePage() {
     name: "",
     phone: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (userData) {
@@ -81,6 +84,19 @@ export default function EditProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userData) return;
+
+    setErrors({});
+
+    // Client-side validation
+    const validation = validateProfileEdit(formData);
+    if (!validation.isValid) {
+      const errorMap: Record<string, string> = {};
+      validation.errors.forEach((error) => {
+        errorMap[error.field] = error.message;
+      });
+      setErrors(errorMap);
+      return;
+    }
 
     setLoading(true);
 
@@ -185,8 +201,9 @@ export default function EditProfilePage() {
               icon={<User size={20} />}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
+              error={!!errors.name}
             />
+            <ErrorLabel message={errors.name} />
           </div>
 
           <div>
@@ -212,7 +229,9 @@ export default function EditProfilePage() {
               icon={<User size={20} />}
               value={formData.phone || ""}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              error={!!errors.phone}
             />
+            <ErrorLabel message={errors.phone} />
           </div>
         </div>
 

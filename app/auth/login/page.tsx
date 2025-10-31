@@ -7,14 +7,29 @@ import TextField from "@/components/common/TextField";
 import PasswordTextField from "@/components/common/PasswordTextField";
 import ErrorLabel from "@/components/common/ErrorLabel";
 import { signIn } from "../actions";
+import { validateLogin } from "@/lib/validation/validationSchemas";
 
 export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrors({});
+
+    // Client-side validation
+    const validation = validateLogin({ email, password });
+    if (!validation.isValid) {
+      const errorMap: Record<string, string> = {};
+      validation.errors.forEach((error) => {
+        errorMap[error.field] = error.message;
+      });
+      setErrors(errorMap);
+      return;
+    }
+
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -51,7 +66,8 @@ export default function LoginPage() {
                 name="email"
                 placeholder="อีเมล"
                 icon={<Mail size={20} />}
-                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 error={!!errors.email}
               />
               <ErrorLabel message={errors.email} />
@@ -61,7 +77,8 @@ export default function LoginPage() {
               <PasswordTextField
                 name="password"
                 placeholder="รหัสผ่าน"
-                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 error={!!errors.password}
               />
               <ErrorLabel message={errors.password} />

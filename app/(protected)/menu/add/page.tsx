@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Header from "@/components/common/Header";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
+import ErrorLabel from "@/components/common/ErrorLabel";
 import Image from "next/image";
 import { Upload, X, Plus } from "lucide-react";
 import { useIngredients } from "@/lib/hooks/useIngredients";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { validateMenu } from "@/lib/validation/validationSchemas";
 
 interface MenuIngredient {
   ingredient_id: number;
@@ -28,6 +30,7 @@ export default function AddMenuPage() {
   const [selectedIngredients, setSelectedIngredients] = useState<MenuIngredient[]>([]);
   const [saving, setSaving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // For adding ingredient
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,7 +61,7 @@ export default function AddMenuPage() {
 
   const handleAddIngredient = () => {
     if (!selectedIngredient) {
-      toast.error("กรุณาเลือกวัตถุดิบ");
+      toast.error("กรุณาเลือกวัตถุดิบที่มีอยู่ในระบบ");
       return;
     }
     if (!quantity || parseFloat(quantity) <= 0) {
@@ -126,16 +129,28 @@ export default function AddMenuPage() {
   };
 
   const handleConfirmSave = () => {
-    if (!menuName.trim()) {
-      toast.error("กรุณาระบุชื่อเมนู");
+    setErrors({});
+
+    // Validate menu data
+    const validation = validateMenu({
+      menu_name: menuName,
+      description: description,
+      price: parseFloat(price) || undefined,
+      recipe: recipe
+    });
+
+    if (!validation.isValid) {
+      const errorMap: Record<string, string> = {};
+      validation.errors.forEach((error) => {
+        errorMap[error.field] = error.message;
+      });
+      setErrors(errorMap);
       return;
     }
-    if (!price || parseFloat(price) <= 0) {
-      toast.error("กรุณาระบุราคาที่ถูกต้อง");
-      return;
-    }
+
+    // Additional validations
     if (!imageFile) {
-      toast.error("กรุณาเลือกรูปภาพ");
+      setErrors({ ...errors, image: "กรุณาเลือกรูปภาพ" });
       return;
     }
     if (selectedIngredients.length === 0) {
@@ -221,6 +236,7 @@ export default function AddMenuPage() {
                 <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
               </label>
             )}
+            <ErrorLabel message={errors.image} />
           </div>
 
           {/* Menu info */}
@@ -236,6 +252,7 @@ export default function AddMenuPage() {
                 placeholder="กรอกชื่อเมนู"
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
               />
+              <ErrorLabel message={errors.menu_name} />
             </div>
 
             <div>
@@ -247,6 +264,7 @@ export default function AddMenuPage() {
                 placeholder="กรอกคำอธิบาย (ถ้ามี)"
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent resize-none"
               />
+              <ErrorLabel message={errors.description} />
             </div>
 
             <div>
@@ -260,6 +278,7 @@ export default function AddMenuPage() {
                 min="0"
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
               />
+              <ErrorLabel message={errors.price} />
             </div>
 
             <div>
@@ -272,6 +291,7 @@ export default function AddMenuPage() {
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">แต่ละขั้นตอนขึ้นบรรทัดใหม่</p>
+              <ErrorLabel message={errors.recipe} />
             </div>
           </div>
 

@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { notifyOrderStatusChange } from "@/lib/utils/notificationUtils";
 import Header from "@/components/common/Header";
 import ImageViewer from "@/components/order/ImageViewer";
+import ErrorLabel from "@/components/common/ErrorLabel";
 import toast from "react-hot-toast";
 
 export default function PaymentPage({
@@ -27,10 +28,30 @@ export default function PaymentPage({
   const [slipPreview, setSlipPreview] = useState<string>("");
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // ตรวจสอบประเภทไฟล์
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        setErrors({ slip: 'กรุณาเลือกไฟล์ภาพประเภท .jpg, .jpeg หรือ .png เท่านั้น' });
+        setSlipFile(null);
+        setSlipPreview("");
+        return;
+      }
+
+      // ตรวจสอบขนาดไฟล์ (ไม่เกิน 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        setErrors({ slip: 'ขนาดไฟล์ต้องไม่เกิน 5 MB' });
+        setSlipFile(null);
+        setSlipPreview("");
+        return;
+      }
+
+      setErrors({});
       setSlipFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -61,8 +82,10 @@ export default function PaymentPage({
   };
 
   const handleConfirmPayment = async () => {
+    setErrors({});
+
     if (!slipFile && !order?.slip_url) {
-      toast.error("กรุณาแนบสลิปการโอนเงิน");
+      setErrors({ slip: 'กรุณาแนบสลิปการโอนเงิน' });
       return;
     }
 
@@ -193,6 +216,7 @@ export default function PaymentPage({
                     onClick={() => {
                       setSlipFile(null);
                       setSlipPreview("");
+                      setErrors({});
                     }}
                     className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                   >
@@ -211,7 +235,7 @@ export default function PaymentPage({
                   เปลี่ยนรูป
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/jpg,image/png"
                     onChange={handleImageChange}
                     className="hidden"
                   />
@@ -222,14 +246,17 @@ export default function PaymentPage({
             <label className="flex flex-col items-center justify-center w-full aspect-[3/4] max-w-xs mx-auto border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
               <Upload size={40} className="text-gray-400 mb-2" />
               <span className="text-gray-500 text-sm">คลิกเพื่อเลือกรูปสลิป</span>
+              <span className="text-gray-400 text-xs mt-1">(.jpg, .jpeg, .png เท่านั้น ขนาดไม่เกิน 5MB)</span>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png"
                 onChange={handleImageChange}
                 className="hidden"
               />
             </label>
           )}
+
+          {errors.slip && <ErrorLabel message={errors.slip} />}
 
           {order.slip_url && (
             <p className="text-xs text-gray-500 text-center">

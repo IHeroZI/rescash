@@ -6,37 +6,43 @@ import { useState } from "react";
 import Header from "@/components/common/Header";
 import TextField from "@/components/common/TextField";
 import PasswordTextField from "@/components/common/PasswordTextField";
+import ErrorLabel from "@/components/common/ErrorLabel";
 import { signUp } from "../actions";
+import { validateSignUp } from "@/lib/validation/validationSchemas";
 
 export default function RegisterPage() {
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    password: "",
+    confirmPassword: ""
+  });
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
+    setErrors({});
 
-    if (password !== confirmPassword) {
-      setError("รหัสผ่านไม่ตรงกัน");
-      return;
-    }
-
-    const formData = new FormData(e.currentTarget);
-    const phone = formData.get("phone") as string;
-
-    // Validate phone number: must be 10 digits and all numeric
-    if (!/^\d{10}$/.test(phone)) {
-      setError("กรุณากรอกเบอร์โทรให้ถูกต้อง (10 หลักและเป็นตัวเลขเท่านั้น)");
+    // Client-side validation
+    const validation = validateSignUp(formData);
+    if (!validation.isValid) {
+      const errorMap: Record<string, string> = {};
+      validation.errors.forEach((error) => {
+        errorMap[error.field] = error.message;
+      });
+      setErrors(errorMap);
       return;
     }
 
     setLoading(true);
-    const result = await signUp(formData);
+    const formDataObj = new FormData(e.currentTarget);
+    const result = await signUp(formDataObj);
 
     if (result?.error) {
-      setError(result.error);
+      setErrors({ general: result.error });
       setLoading(false);
     }
   }
@@ -60,57 +66,83 @@ export default function RegisterPage() {
             <p className="text-sm text-gray-500 text-center">สร้างบัญชีผู้ใช้ของคุณ</p>
           </div>
           
-          {error && (
+          {errors.general && (
             <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
-              {error}
+              {errors.general}
             </div>
           )}
           
           <div className="space-y-5">
-            <TextField
-              type="email"
-              name="email"
-              placeholder="อีเมล"
-              icon={<Mail size={20} />}
-              required
-            />
-            <div className="grid grid-cols-2 gap-4">
+            <div>
               <TextField
-                type="text"
-                name="firstName"
-                placeholder="ชื่อจริง"
-                icon={<User size={20} />}
-                required
+                type="email"
+                name="email"
+                placeholder="อีเมล"
+                icon={<Mail size={20} />}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                error={!!errors.email}
               />
-              <TextField
-                type="text"
-                name="lastName"
-                placeholder="นามสกุล"
-                icon={<User size={20} />}
-                required
-              />
+              <ErrorLabel message={errors.email} />
             </div>
-            <TextField
-              type="tel"
-              name="phone"
-              placeholder="เบอร์โทร"
-              icon={<Phone size={20} />}
-              required
-            />
-            <PasswordTextField
-              name="password"
-              placeholder="รหัสผ่าน"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <PasswordTextField
-              name="confirmPassword"
-              placeholder="ยืนยันรหัสผ่าน"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <TextField
+                  type="text"
+                  name="firstName"
+                  placeholder="ชื่อจริง"
+                  icon={<User size={20} />}
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  error={!!errors.firstName}
+                />
+                <ErrorLabel message={errors.firstName} />
+              </div>
+              <div>
+                <TextField
+                  type="text"
+                  name="lastName"
+                  placeholder="นามสกุล"
+                  icon={<User size={20} />}
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  error={!!errors.lastName}
+                />
+                <ErrorLabel message={errors.lastName} />
+              </div>
+            </div>
+            <div>
+              <TextField
+                type="tel"
+                name="phone"
+                placeholder="เบอร์โทร"
+                icon={<Phone size={20} />}
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                error={!!errors.phone}
+              />
+              <ErrorLabel message={errors.phone} />
+            </div>
+            <div>
+              <PasswordTextField
+                name="password"
+                placeholder="รหัสผ่าน"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                error={!!errors.password}
+              />
+              <ErrorLabel message={errors.password} />
+            </div>
+            <div>
+              <PasswordTextField
+                name="confirmPassword"
+                placeholder="ยืนยันรหัสผ่าน"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                error={!!errors.confirmPassword}
+              />
+              <ErrorLabel message={errors.confirmPassword} />
+            </div>
           </div>
         
           {/* Buttons and links (bottom part) */}

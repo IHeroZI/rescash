@@ -11,8 +11,10 @@ import "./datepicker.css";
 import { useCartStore } from "@/lib/store/cartStore";
 import { useUser } from "@/lib/hooks/useUser";
 import { createOrder } from "@/lib/utils/createOrder";
+import { validateCart } from "@/lib/validation/validationSchemas";
 import toast from "react-hot-toast";
 import Header from "@/components/common/Header";
+import ErrorLabel from "@/components/common/ErrorLabel";
 
 // ลงทะเบียน locale ภาษาไทย
 registerLocale("th", th);
@@ -24,6 +26,7 @@ export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, getTotalPrice } = useCartStore();
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   
   // เพิ่ม state สำหรับวันและเวลารับอาหาร (เป็น Date object)
   const [pickupDateTime, setPickupDateTime] = useState<Date>(() => {
@@ -36,6 +39,8 @@ export default function CartPage() {
   const totalPrice = getTotalPrice();
 
   const handleCreateOrder = async () => {
+    setErrors({});
+
     if (items.length === 0) {
       toast.error("กรุณาเลือกเมนูอาหาร");
       return;
@@ -46,21 +51,35 @@ export default function CartPage() {
       return;
     }
 
+    // แปลง Date เป็น ISO string สำหรับ validation
+    const pickupTimestamp = pickupDateTime.toISOString();
+
+    // Validate appointment time
+    const validation = validateCart({
+      appointmentTime: pickupTimestamp
+    });
+
+    if (!validation.isValid) {
+      const errorMap: Record<string, string> = {};
+      validation.errors.forEach((error) => {
+        errorMap[error.field] = error.message;
+      });
+      setErrors(errorMap);
+      return;
+    }
+
     // Validate: ต้องเป็นเวลาในอนาคตอย่างน้อย 12 ชั่วโมง
     const now = new Date();
     const minTime = new Date(now.getTime() + 12 * 60 * 60 * 1000); // +12 ชั่วโมง
     
     if (pickupDateTime < minTime) {
-      toast.error("กรุณาเลือกเวลารับอาหารอย่างน้อย 12 ชั่วโมงข้างหน้า");
+      setErrors({ appointmentTime: "กรุณาเลือกเวลารับอาหารอย่างน้อย 12 ชั่วโมงข้างหน้า" });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // แปลง Date เป็น timestamp (ISO string)
-      const pickupTimestamp = pickupDateTime.toISOString();
-
       // Create order with QR code and public_order_id
       const orderId = await createOrder({
         user_id: userData.user_id,
@@ -152,6 +171,7 @@ export default function CartPage() {
             portalId="root-portal"
           />
         </div>
+        <ErrorLabel message={errors.appointmentTime} />
         <p className="text-xs text-gray-500 mt-2">
           * กรุณาเลือกเวลารับอาหารอย่างน้อย 12 ชั่วโมงข้างหน้า
         </p>

@@ -280,3 +280,167 @@ export function validatePurchase(data: PurchaseValidationData, isUpdate = false)
     errors
   };
 }
+
+// Login validation
+export interface LoginValidationData {
+  email?: string;
+  password?: string;
+}
+
+export function validateLogin(data: LoginValidationData): ValidationResult {
+  const errors: ValidationError[] = [];
+
+  if (!data.email || data.email.trim().length === 0) {
+    errors.push({ field: 'email', message: 'กรุณากรอกอีเมล' });
+  } else if (!isValidEmail(data.email)) {
+    errors.push({ field: 'email', message: 'รูปแบบอีเมลไม่ถูกต้อง' });
+  }
+
+  if (!data.password || data.password.length === 0) {
+    errors.push({ field: 'password', message: 'กรุณากรอกรหัสผ่าน' });
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+// Sign up validation
+export interface SignUpValidationData {
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
+export function validateSignUp(data: SignUpValidationData): ValidationResult {
+  const errors: ValidationError[] = [];
+
+  if (!data.email || data.email.trim().length === 0) {
+    errors.push({ field: 'email', message: 'กรุณากรอกอีเมล' });
+  } else if (!isValidEmail(data.email)) {
+    errors.push({ field: 'email', message: 'รูปแบบอีเมลไม่ถูกต้อง' });
+  }
+
+  if (!data.firstName || data.firstName.trim().length === 0) {
+    errors.push({ field: 'firstName', message: 'กรุณากรอกชื่อจริง' });
+  } else if (data.firstName.trim().length < 2) {
+    errors.push({ field: 'firstName', message: 'ชื่อจริงต้องมีอย่างน้อย 2 ตัวอักษร' });
+  }
+
+  if (!data.lastName || data.lastName.trim().length === 0) {
+    errors.push({ field: 'lastName', message: 'กรุณากรอกนามสกุล' });
+  } else if (data.lastName.trim().length < 2) {
+    errors.push({ field: 'lastName', message: 'นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร' });
+  }
+
+  if (!data.phone || data.phone.trim().length === 0) {
+    errors.push({ field: 'phone', message: 'กรุณากรอกเบอร์โทรศัพท์' });
+  } else if (!isValidPhone(data.phone)) {
+    errors.push({ field: 'phone', message: 'เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก' });
+  }
+
+  if (!data.password || data.password.length === 0) {
+    errors.push({ field: 'password', message: 'กรุณากรอกรหัสผ่าน' });
+  } else if (data.password.length < 6) {
+    errors.push({ field: 'password', message: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' });
+  }
+
+  if (!data.confirmPassword || data.confirmPassword.length === 0) {
+    errors.push({ field: 'confirmPassword', message: 'กรุณายืนยันรหัสผ่าน' });
+  } else if (data.password && data.confirmPassword !== data.password) {
+    errors.push({ field: 'confirmPassword', message: 'รหัสผ่านไม่ตรงกัน' });
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+// Change password validation
+export interface ChangePasswordValidationData {
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}
+
+export function validateChangePassword(data: ChangePasswordValidationData): ValidationResult {
+  const errors: ValidationError[] = [];
+
+  if (!data.currentPassword || data.currentPassword.length === 0) {
+    errors.push({ field: 'currentPassword', message: 'กรุณากรอกรหัสผ่านปัจจุบัน' });
+  }
+
+  if (!data.newPassword || data.newPassword.length === 0) {
+    errors.push({ field: 'newPassword', message: 'กรุณากรอกรหัสผ่านใหม่' });
+  } else if (data.newPassword.length < 6) {
+    errors.push({ field: 'newPassword', message: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร' });
+  }
+
+  if (!data.confirmPassword || data.confirmPassword.length === 0) {
+    errors.push({ field: 'confirmPassword', message: 'กรุณายืนยันรหัสผ่านใหม่' });
+  } else if (data.newPassword && data.confirmPassword !== data.newPassword) {
+    errors.push({ field: 'confirmPassword', message: 'รหัสผ่านไม่ตรงกัน' });
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+// Profile edit validation
+export interface ProfileEditValidationData {
+  name?: string;
+  phone?: string;
+}
+
+export function validateProfileEdit(data: ProfileEditValidationData): ValidationResult {
+  const errors: ValidationError[] = [];
+
+  if (!data.name || data.name.trim().length === 0) {
+    errors.push({ field: 'name', message: 'กรุณากรอกชื่อ' });
+  } else if (data.name.trim().length < 2) {
+    errors.push({ field: 'name', message: 'ชื่อต้องมีอย่างน้อย 2 ตัวอักษร' });
+  } else if (data.name.trim().length > 100) {
+    errors.push({ field: 'name', message: 'ชื่อต้องไม่เกิน 100 ตัวอักษร' });
+  }
+
+  if (data.phone && data.phone.trim().length > 0) {
+    if (!isValidPhone(data.phone)) {
+      errors.push({ field: 'phone', message: 'เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก' });
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+// Cart/Order validation (appointment time)
+export interface CartValidationData {
+  appointmentTime?: string;
+}
+
+export function validateCart(data: CartValidationData): ValidationResult {
+  const errors: ValidationError[] = [];
+
+  if (!data.appointmentTime || data.appointmentTime.trim().length === 0) {
+    errors.push({ field: 'appointmentTime', message: 'กรุณาเลือกเวลานัดรับ' });
+  } else {
+    const appointmentDate = parseThailandDate(data.appointmentTime);
+    if (isNaN(appointmentDate.getTime())) {
+      errors.push({ field: 'appointmentTime', message: 'รูปแบบเวลาไม่ถูกต้อง' });
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}

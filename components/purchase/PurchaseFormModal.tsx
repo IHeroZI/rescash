@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/common/Modal";
+import ErrorLabel from "@/components/common/ErrorLabel";
 import { Plus, X } from "lucide-react";
 import { usePurchaseStore } from "@/lib/store/purchaseStore";
 import { useIngredients } from "@/lib/hooks/useIngredients";
 import { getThailandDateISO } from "@/lib/utils/dateUtils";
+import { validatePurchase } from "@/lib/validation/validationSchemas";
 import toast from "react-hot-toast";
 
 interface PurchaseFormModalProps {
@@ -28,6 +30,7 @@ export default function PurchaseFormModal({
   const [notes, setNotes] = useState("");
   const [purchaseDate, setPurchaseDate] = useState<string>(getThailandDateISO());
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Current item being added
   const [selectedIngredientId, setSelectedIngredientId] = useState<number | "">("");
@@ -113,7 +116,7 @@ export default function PurchaseFormModal({
 
   const handleAddItem = () => {
     if (!selectedIngredient) {
-      toast.error("กรุณาเลือกวัตถุดิบ");
+      toast.error("กรุณาเลือกวัตถุดิบที่มีอยู่ในระบบ");
       return;
     }
     if (!quantity || parseFloat(quantity) <= 0) {
@@ -156,22 +159,38 @@ export default function PurchaseFormModal({
   };
 
   const handleSave = async () => {
-    if (items.length === 0) {
-      toast.error("กรุณาเพิ่มรายการวัตถุดิบอย่างน้อย 1 รายการ");
+    setErrors({});
+
+    // Validate purchase data
+    const totalAmount = getTotalAmount();
+    const purchaseItems = items.map((item) => ({
+      ingredient_id: item.ingredient_id,
+      quantity_purchased: item.quantity,
+      unit_cost: item.unit_cost,
+    }));
+
+    const validation = validatePurchase({
+      total_amount: totalAmount,
+      purchase_datetime: purchaseDate,
+      items: purchaseItems
+    }, mode === "edit");
+
+    if (!validation.isValid) {
+      const errorMap: Record<string, string> = {};
+      validation.errors.forEach((error) => {
+        errorMap[error.field] = error.message;
+      });
+      setErrors(errorMap);
+      
+      // Show toast for items error
+      if (errorMap.items) {
+        toast.error(errorMap.items);
+      }
       return;
     }
 
     try {
       setSaving(true);
-
-      const totalAmount = getTotalAmount();
-
-      // Prepare items data
-      const purchaseItems = items.map((item) => ({
-        ingredient_id: item.ingredient_id,
-        quantity_purchased: item.quantity,
-        unit_cost: item.unit_cost,
-      }));
 
       if (mode === "edit" && purchaseId) {
         // Update existing purchase via API
@@ -243,6 +262,7 @@ export default function PurchaseFormModal({
             onChange={(e) => setPurchaseDate(new Date(e.target.value).toISOString())}
             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent"
           />
+          <ErrorLabel message={errors.purchase_datetime} />
         </div>
 
         {/* Add item section */}

@@ -6,6 +6,8 @@ import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import PasswordTextField from "@/components/common/PasswordTextField";
+import ErrorLabel from "@/components/common/ErrorLabel";
+import { validateChangePassword } from "@/lib/validation/validationSchemas";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
@@ -15,19 +17,20 @@ export default function ChangePasswordPage() {
     newPassword: "",
     confirmPassword: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
 
-
-
-    if (formData.newPassword !== formData.confirmPassword) {
-      toast.error("รหัสผ่านใหม่ไม่ตรงกัน");
-      return;
-    }
-
-    if (formData.newPassword.length < 6) {
-      toast.error("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
+    // Client-side validation
+    const validation = validateChangePassword(formData);
+    if (!validation.isValid) {
+      const errorMap: Record<string, string> = {};
+      validation.errors.forEach((error) => {
+        errorMap[error.field] = error.message;
+      });
+      setErrors(errorMap);
       return;
     }
 
@@ -37,15 +40,15 @@ export default function ChangePasswordPage() {
       const supabase = createClient();
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
-  email: (await supabase.auth.getUser()).data.user?.email ?? "",
-  password: formData.currentPassword,
-});
+        email: (await supabase.auth.getUser()).data.user?.email ?? "",
+        password: formData.currentPassword,
+      });
 
-if (signInError) {
-  toast.error("รหัสผ่านปัจจุบันไม่ถูกต้อง");
-  setLoading(false);
-  return;
-}
+      if (signInError) {
+        setErrors({ currentPassword: "รหัสผ่านปัจจุบันไม่ถูกต้อง" });
+        setLoading(false);
+        return;
+      }
 
       const { error } = await supabase.auth.updateUser({
         password: formData.newPassword,
@@ -84,8 +87,9 @@ if (signInError) {
               placeholder="รหัสผ่านปัจจุบัน"
               value={formData.currentPassword}
               onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-              required
+              error={!!errors.currentPassword}
             />
+            <ErrorLabel message={errors.currentPassword} />
           </div>
 
           <div>
@@ -97,8 +101,9 @@ if (signInError) {
               placeholder="รหัสผ่านใหม่"
               value={formData.newPassword}
               onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-              required
+              error={!!errors.newPassword}
             />
+            <ErrorLabel message={errors.newPassword} />
           </div>
 
           <div>
@@ -110,8 +115,9 @@ if (signInError) {
               placeholder="ยืนยันรหัสผ่านใหม่"
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              required
+              error={!!errors.confirmPassword}
             />
+            <ErrorLabel message={errors.confirmPassword} />
           </div>
         </div>
 
