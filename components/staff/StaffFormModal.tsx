@@ -152,17 +152,26 @@ export default function StaffFormModal({
 
         toast.success("แก้ไขข้อมูลสำเร็จ");
       } else {
-        // Add new staff - Check if user exists by email and update role
+        // Add new staff - Check if user exists by email and has customer role
         const checkResponse = await fetch(`/api/users?email=${encodeURIComponent(email)}`);
         const checkResult = await checkResponse.json();
 
         if (!checkResult.success || !checkResult.data || checkResult.data.length === 0) {
+          setErrors({ email: 'ไม่พบผู้ใช้งานที่มีอีเมลนี้ในระบบ' });
           toast.error("ไม่พบผู้ใช้งานที่มีอีเมลนี้ในระบบ");
           setSaving(false);
           return;
         }
 
         const user = checkResult.data[0];
+
+        // Check if user role is customer
+        if (user.role !== 'customer') {
+          setErrors({ email: 'ผู้ใช้งานนี้เป็นพนักงานหรือแอดมินอยู่แล้ว' });
+          toast.error("ผู้ใช้งานนี้เป็นพนักงานหรือแอดมินอยู่แล้ว");
+          setSaving(false);
+          return;
+        }
 
         // Update role to staff
         const updateResponse = await fetch(`/api/users/${user.user_id}`, {

@@ -1,0 +1,560 @@
+@startuml
+' ========== ตั้งค่าเพื่อให้รูปไม่ถูกตัด ==========
+skinparam dpi 150
+skinparam defaultTextAlignment center
+skinparam wrapWidth 200
+skinparam maxMessageSize 150
+
+' ========== ตั้งค่า Layout ==========
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 80
+skinparam padding 2
+skinparam classFontSize 10
+skinparam classAttributeFontSize 9
+
+' ========== ตั้งค่าสี ==========
+skinparam packageStyle rectangle
+skinparam packageBackgroundColor #F0F0F0
+skinparam packageBorderColor #888888
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #666666
+
+' ========== ตั้งค่าให้ไม่ตัดขอบ ==========
+skinparam shadowing false
+skinparam handwritten false
+
+' ========== Interface Layer ==========
+package "Interface Layer" {
+  class MenuListInterface {
+    - menuList: List<Menu>
+    + displayMenu(menuList)
+    + navigate(selectedMenu)
+  }
+  
+  class MenuDetailInterface {
+    - selectedMenu: Menu
+    - quantity: int
+    + displayMenuDetail()
+    + updateQuantity(quantity)
+    + addToCart()
+  }
+  
+  class CartInterface {
+    - cartItems: List<CartItem>
+    - totalAmount: decimal
+    + displayCart()
+    + updateCartItemQuantity(menuId, quantity)
+    + validateOrderForm(): boolean
+    + showError(message)
+  }
+  
+  class OrderInterface {
+    - order: Order
+    + displayOrder(order)
+    + showSuccessDialog(message)
+    + displaySubmitPaymentButton()
+    + displayOrderCancelButton()
+  }
+  
+  class AllOrderInterface {
+    - orderList: List<Order>
+    + displayAllOrder(orderList)
+    + filterAwaitingPaymentOrder()
+    + filterReceivedOrder()
+    + filterCookingOrder()
+    + redirectToOrder()
+  }
+  
+  class PaymentInterface {
+    - qrData: QRData
+    + displayQrData(qrData)
+    + uploadSlipImage()
+    + validateImageFile(): boolean
+    + showDialog(message)
+  }
+  
+  class ExpenseSheetInterface {
+    - expenseList: List<Expense>
+    + displayExpense(expenseList)
+    + addExpense()
+    + calculatePrice()
+    + validateExpense(): boolean
+  }
+  
+  class IngredientInterface {
+    - ingredientList: List<Ingredient>
+    + displayIngredient(ingredientList)
+  }
+  
+  class MenuInterface {
+    - menuList: List<Menu>
+    + displayMenu(menuList)
+    + displaySearchMenu()
+  }
+  
+  class RecipeInterface {
+    - recipeList: List<Recipe>
+    + displayRecipe(recipeList)
+  }
+  
+  class UserPageInterface {
+    - userData: User
+    + displayUserData(userData)
+    + validateEditProfile(): boolean
+  }
+  
+  class LoginPageInterface {
+    + validateLoginForm(): boolean
+    + showValidationError(message)
+    + showLoginError(message)
+  }
+  
+  class RegisterInterface {
+    + validateRegister(): boolean
+  }
+  
+  class ManageStaffInterface {
+    - staffList: List<Staff>
+    + displayStaff(staffList)
+    + displayUser(userList)
+    + displaySelectedUser()
+    + displaySubmitButton()
+    + validateStaff(): boolean
+  }
+  
+  class DashboardInterface {
+    - purchaseOrderList: List<Object>
+    + displayPurchaseAndOrder(list)
+    + filterByYear(year)
+    + displayDashboardByYear()
+  }
+  
+  class NotificationInterface {
+    - notiList: List<Notification>
+    + displayNoti(notiList)
+  }
+  
+  class AdminAllOrderInterface {
+    - allOrderList: List<Order>
+    + displayAllOrder(allOrderList)
+    + filterAwaitingPaymentOrder()
+  }
+  
+  class AdminOrderInterface {
+    - selectedOrderList: List<Order>
+    + displayOrderData(selectedOrderList)
+  }
+  
+  class MoreInterface {
+    + redirectToDashboard()
+    + redirectToLoginPage()
+  }
+}
+
+' ========== Controller Layer ==========
+package "Controller Layer" {
+  class MenuController {
+    + getAvailableMenus(): List<Menu>
+    + findMenuByName(menuName): List<Menu>
+    + getMenu(): List<Menu>
+    + getMenuStaff(): List<Menu>
+    + getRecipe(menuId): List<Recipe>
+    + addNewMenu()
+    + updateMenu()
+    + getIngredient(): List<Ingredient>
+    + getLastMenuId(): int
+    + addNewMenuIngredient(menuId)
+  }
+  
+  class CartController {
+    + addToCart(menuId, quantity, price)
+    + updateCartItemQuantity(menuId, quantity)
+    + createOrder(userId, cartItems, notes, appointmentDatetime)
+  }
+  
+  class OrderController {
+    - orderId: string
+    - publicOrderId: string
+    - totalAmount: decimal
+    + createOrder(userId, cartItems, notes, appointmentDatetime)
+    + calculateTotalAmount(): decimal
+    + generatePublicOrderId(): string
+    + getOrderData(): Order
+    + updateOrderStatus()
+    + getQrData(orderId): QRData
+    + getSelectedOrder(): List<Order>
+    + createNotificationCustomer()
+    + createNotificationAdmin()
+    + createNotificationStaff()
+  }
+  
+  class PaymentController {
+    + getQrData(orderId): QRData
+    + updateOrderStatus(orderId, slipUrl)
+  }
+  
+  class AllOrderController {
+    + getAllOrder(userId): List<Order>
+    + filterReceivedOrder()
+    + filterCookingOrder()
+    + redirectToOrder()
+  }
+  
+  class ExpenseSheetController {
+    + getExpenseList(): List<Expense>
+    + getSuggestionIngredient(): List<Ingredient>
+    + addPurchase()
+    + updateExpenseStatus()
+    + deletePurchaseIngredient(purchaseId)
+    + updatePurchase(purchaseId, totalAmount)
+    + addPurchaseIngredient()
+  }
+  
+  class IngredientController {
+    + getIngredient(): List<Ingredient>
+    + addNewIngredient()
+    + deleteIngredient()
+    + updateIngredient()
+  }
+  
+  class UserPageController {
+    + getUserData(): User
+    + updateUserProfile()
+    + updateUserPassword()
+  }
+  
+  class LoginPageController {
+    + authenticateUser(email, password): boolean
+    + hashPassword(password): string
+    + compare(hashedInput, hashedPassword): boolean
+  }
+  
+  class RegisterController {
+    + addNewUser()
+  }
+  
+  class ManageStaffController {
+    + getStaff(): List<Staff>
+    + getUserByEmail(): List<User>
+    + updateStaffRole()
+    + deleteStaff()
+    + updateStaff(employeeId)
+  }
+  
+  class DashboardController {
+    + getPurchaseAndOrder(): List<Object>
+  }
+  
+  class NotificationController {
+    + getNoti(): List<Notification>
+    + updateNoti()
+  }
+  
+  class AdminAllOrderController {
+    + getAllOrder(): List<Order>
+    + filterAwaitingPayment()
+  }
+  
+  class AdminOrderController {
+    + getSelectedOrder(): List<Order>
+    + updateOrderStatus()
+    + createNotificationCustomer()
+    + createNotificationStaff()
+  }
+}
+
+' ========== Service Layer ==========
+package "Service Layer" {
+  class QRGenerator {
+    + generateQR(publicOrderId, totalAmount): string
+  }
+  
+  class NotificationService {
+    + createNotification(userId, orderId)
+  }
+  
+  class ImageUploadService {
+    + onAttachSlipButton()
+  }
+  
+  class ErrorService {
+    + showError(message)
+  }
+  
+  class PopupService {
+    + showPopup()
+    + closePopup()
+    + showStatusChangeButton()
+    + deleteExpensePopup()
+    + OnStartCooking()
+    + OnFinishCooking()
+    + OnCompletedOrderButton()
+  }
+  
+  class ExpenseFormService {
+    + onAddExpense()
+    + closeForm()
+  }
+  
+  class MenuFormService {
+    + onAddMenuButton()
+    + onEditMenuButton()
+    + showMenuForm()
+    + closeForm()
+    + showSuggestIngredient(ingredientList)
+    + autoFillUnit()
+    + addNewIngredientField()
+  }
+  
+  class IngredientFormService {
+    + showIngredientForm()
+    + closeForm()
+  }
+  
+  class UserEditForm {
+    + showUserEditForm()
+    + closeForm()
+  }
+  
+  class ChangePasswordFormService {
+    + showChangePasswordForm()
+    + closeForm()
+  }
+  
+  class AddStaffFormService {
+    + showAddStaffForm()
+  }
+  
+  class EditStaffFormService {
+    + showEditStaffForm(selectedStaff)
+    + closeForm()
+  }
+  
+  class SessionStorage {
+    + setItem(key, value)
+  }
+  
+  class Navigator {
+    + redirectToMenu()
+  }
+}
+
+' ========== Database Layer ==========
+package "Database Layer" {
+  class DatabaseConnection {
+    + getAvailableMenus(): List<Menu>
+    + getAllOrder(userId): List<Order>
+    + insertOrder(orderData)
+    + getLastOrderId(): int
+    + insertMenuOrders(menuId, orderId, quantity, priceAtOrderTime)
+    + uploadQRImage(): string
+    + updateOrderStatus(orderId, slipUrl)
+    + getQrData(orderId): QRData
+    + insertNotification(userId, orderId, message)
+    + getExpenseList(): List<Expense>
+    + getSuggestionIngredient(): List<Ingredient>
+    + addPurchase()
+    + getLastPurchaseID(): int
+    + addPurchaseIngredient()
+    + updateExpenseStatus()
+    + deletePurchaseIngredient(purchaseId)
+    + updatePurchase(purchaseId, totalAmount)
+    + getIngredient(): List<Ingredient>
+    + addNewIngredient()
+    + deleteIngredient()
+    + updateIngredient()
+    + getMenu(): List<Menu>
+    + getMenuStaff(): List<Menu>
+    + getRecipe(menuId): List<Recipe>
+    + addNewMenu()
+    + getLastMenuId(): int
+    + addNewMenuIngredient(menuId)
+    + updateMenu()
+    + getUserData(): User
+    + updateUserProfile()
+    + updateUserPassword()
+    + findUserByEmail(email): User
+    + addNewUser()
+    + getStaff(): List<Staff>
+    + getUserByEmail(): List<User>
+    + updateStaffRole()
+    + deleteStaff()
+    + updateStaff(employeeId)
+    + getPurchaseAndOrder(): List<Object>
+    + getNoti(): List<Notification>
+    + updateNoti()
+    + createNotificationCustomer()
+    + createNotificationAdmin()
+    + createNotificationStaff()
+  }
+}
+
+' ========== Entity/Model Layer ==========
+package "Model Layer" {
+  class Menu {
+    - menuId: int
+    - menuName: string
+    - price: decimal
+    - description: string
+    - recipe: string
+    - status: string
+  }
+  
+  class CartItem {
+    - menuId: int
+    - quantity: int
+    - price: decimal
+  }
+  
+  class Order {
+    - orderId: int
+    - userId: int
+    - totalAmount: decimal
+    - orderStatus: string
+    - createDatetime: datetime
+    - updateDatetime: datetime
+    - appointmentDatetime: datetime
+    - publicOrderId: string
+    - qrUrl: string
+    - slipUrl: string
+    - notes: string
+  }
+  
+  class QRData {
+    - publicOrderId: string
+    - totalAmount: decimal
+    - qrUrl: string
+  }
+  
+  class Expense {
+    - purchaseId: int
+    - totalAmount: decimal
+    - purchaseDatetime: datetime
+    - status: string
+  }
+  
+  class Ingredient {
+    - ingredientId: int
+    - ingredientName: string
+    - unitOfMeasure: string
+    - status: string
+  }
+  
+  class Recipe {
+    - menuId: int
+    - ingredientId: int
+    - quantityRequired: decimal
+  }
+  
+  class User {
+    - userId: int
+    - email: string
+    - hashedPassword: string
+    - name: string
+    - phone: string
+    - role: string
+  }
+  
+  class Staff {
+    - employeeId: int
+    - userId: int
+    - name: string
+    - email: string
+    - phone: string
+  }
+  
+  class Notification {
+    - notificationId: int
+    - userId: int
+    - orderId: int
+    - message: string
+    - isRead: boolean
+    - createDatetime: datetime
+  }
+}
+
+' ========== Relationships ==========
+
+' Interface to Controller
+MenuListInterface --> MenuController
+MenuDetailInterface --> CartController
+CartInterface --> CartController
+CartInterface --> OrderController
+OrderInterface --> OrderController
+AllOrderInterface --> AllOrderController
+AllOrderInterface --> OrderController
+PaymentInterface --> PaymentController
+ExpenseSheetInterface --> ExpenseSheetController
+IngredientInterface --> IngredientController
+MenuInterface --> MenuController
+RecipeInterface --> MenuController
+UserPageInterface --> UserPageController
+LoginPageInterface --> LoginPageController
+LoginPageInterface --> RegisterController
+RegisterInterface --> RegisterController
+ManageStaffInterface --> ManageStaffController
+DashboardInterface --> DashboardController
+NotificationInterface --> NotificationController
+AdminAllOrderInterface --> AdminAllOrderController
+AdminOrderInterface --> AdminOrderController
+
+' Controller to Database
+MenuController --> DatabaseConnection
+CartController --> DatabaseConnection
+OrderController --> DatabaseConnection
+PaymentController --> DatabaseConnection
+AllOrderController --> DatabaseConnection
+ExpenseSheetController --> DatabaseConnection
+IngredientController --> DatabaseConnection
+UserPageController --> DatabaseConnection
+LoginPageController --> DatabaseConnection
+RegisterController --> DatabaseConnection
+ManageStaffController --> DatabaseConnection
+DashboardController --> DatabaseConnection
+NotificationController --> DatabaseConnection
+AdminAllOrderController --> DatabaseConnection
+AdminOrderController --> DatabaseConnection
+
+' Controller to Service
+OrderController --> QRGenerator
+OrderController --> NotificationService
+PaymentController --> ImageUploadService
+ExpenseSheetController --> ExpenseFormService
+ExpenseSheetController --> ErrorService
+ExpenseSheetController --> PopupService
+MenuController --> MenuFormService
+MenuController --> ErrorService
+MenuController --> PopupService
+IngredientController --> IngredientFormService
+IngredientController --> PopupService
+IngredientController --> ErrorService
+UserPageController --> UserEditForm
+UserPageController --> ChangePasswordFormService
+UserPageController --> ErrorService
+LoginPageController --> SessionStorage
+LoginPageController --> Navigator
+ManageStaffController --> AddStaffFormService
+ManageStaffController --> EditStaffFormService
+ManageStaffController --> PopupService
+ManageStaffController --> ErrorService
+PaymentInterface --> ErrorService
+OrderController --> PopupService
+
+' Service to Database
+QRGenerator --> DatabaseConnection
+NotificationService --> DatabaseConnection
+
+' Controllers using Models
+MenuController ..> Menu
+CartController ..> CartItem
+OrderController ..> Order
+PaymentController ..> QRData
+ExpenseSheetController ..> Expense
+IngredientController ..> Ingredient
+MenuController ..> Recipe
+UserPageController ..> User
+ManageStaffController ..> Staff
+NotificationController ..> Notification
+
+@enduml

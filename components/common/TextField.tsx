@@ -8,6 +8,7 @@ interface TextFieldProps {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
+  error?: boolean;
 }
 
 const TextField: FC<TextFieldProps> = ({
@@ -18,6 +19,7 @@ const TextField: FC<TextFieldProps> = ({
   value,
   onChange,
   required = false,
+  error = false,
 }) => {
   return (
     <div className="relative">
@@ -28,7 +30,9 @@ const TextField: FC<TextFieldProps> = ({
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full rounded-xl  bg-gray-100 py-3 pl-12 pr-4 text-gray-700 focus:outline-none"
+        className={`w-full rounded-xl bg-gray-100 py-3 pl-12 pr-4 text-gray-700 focus:outline-none ${
+          error ? 'border-2 border-red-500' : ''
+        }`}
       />
       <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
         {icon}

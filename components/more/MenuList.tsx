@@ -2,7 +2,9 @@
 
 import { Edit, Lock, LogOut, Receipt, Users, Apple, BarChart3 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { signOut } from "@/app/auth/actions";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -41,22 +43,42 @@ function MenuItem({ icon, label, href, onClick }: MenuItemProps) {
 }
 
 export function CustomerStaffMenuList() {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
   return (
     <div className="space-y-1">
       <MenuItem icon={<Edit size={20} />} label="แก้ไขโปรไฟล์" href="/profile/edit" />
       <MenuItem icon={<Lock size={20} />} label="เปลี่ยนรหัสผ่าน" href="/profile/change-password" />
-      <form action={signOut}>
-        <MenuItem
-          icon={<LogOut size={20} />}
-          label="ออกจากระบบ"
-          onClick={() => {}}
-        />
-      </form>
+      <MenuItem
+        icon={<LogOut size={20} />}
+        label="ออกจากระบบ"
+        onClick={() => setShowLogoutConfirm(true)}
+      />
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        title="ยืนยันการออกจากระบบ"
+        message="คุณต้องการออกจากระบบใช่หรือไม่?"
+        confirmText="ออกจากระบบ"
+        confirmColor="bg-red-500 hover:bg-red-600"
+      />
     </div>
   );
 }
 
 export function AdminMenuList() {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
   return (
     <div className="space-y-1">
       <MenuItem icon={<Users size={20} />} label="จัดการพนักงาน" href="/admin/staff-management" />
@@ -64,17 +86,24 @@ export function AdminMenuList() {
       <MenuItem icon={<Receipt size={20} />} label="จัดการรายจ่าย" href="/admin/purchase-management" />
       <MenuItem icon={<BarChart3 size={20} />} label="Dashboard" href="/admin/dashboard" />
       <div className="border-t border-gray-300 pt-2">
-      <MenuItem icon={<Edit size={20} />} label="แก้ไขโปรไฟล์" href="/profile/edit" />
-      <MenuItem icon={<Lock size={20} />} label="เปลี่ยนรหัสผ่าน" href="/profile/change-password" />
-      
-      <form action={signOut}>
+        <MenuItem icon={<Edit size={20} />} label="แก้ไขโปรไฟล์" href="/profile/edit" />
+        <MenuItem icon={<Lock size={20} />} label="เปลี่ยนรหัสผ่าน" href="/profile/change-password" />
         <MenuItem
           icon={<LogOut size={20} />}
           label="ออกจากระบบ"
-          onClick={() => {}}
+          onClick={() => setShowLogoutConfirm(true)}
         />
-      </form>
       </div>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        title="ยืนยันการออกจากระบบ"
+        message="คุณต้องการออกจากระบบใช่หรือไม่?"
+        confirmText="ออกจากระบบ"
+        confirmColor="bg-red-500 hover:bg-red-600"
+      />
     </div>
   );
 }

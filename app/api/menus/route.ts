@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
         recipe, 
         is_available, 
         menu_image_url, 
-        create_datetime, 
-        update_datetime
-      FROM menu
+        create_datetime,  
+        update_datetime 
+      FROM menu 
       WHERE 1=1
     `;
     

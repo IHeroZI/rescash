@@ -126,6 +126,25 @@ export async function PUT(
       );
     }
 
+    // Check if ingredient name already exists (excluding current ingredient)
+    if (ingredient_name !== undefined) {
+      const duplicateIngredient = await queryDbSingle<IngredientRow>(
+        'SELECT ingredient_id FROM ingredient WHERE LOWER(ingredient_name) = LOWER($1) AND ingredient_id != $2',
+        [ingredient_name.trim(), ingredientIdNum]
+      );
+
+      if (duplicateIngredient) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'ชื่อวัตถุดิบนี้มีอยู่แล้ว',
+            errors: [{ field: 'ingredient_name', message: 'ชื่อวัตถุดิบนี้มีอยู่แล้ว' }]
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Build update query dynamically
     const updates: string[] = [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

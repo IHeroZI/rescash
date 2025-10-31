@@ -78,6 +78,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if ingredient name already exists
+    const existingIngredient = await queryDbSingle<IngredientRow>(
+      'SELECT ingredient_id FROM ingredient WHERE LOWER(ingredient_name) = LOWER($1)',
+      [ingredient_name.trim()]
+    );
+
+    if (existingIngredient) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'ชื่อวัตถุดิบนี้มีอยู่แล้ว',
+          errors: [{ field: 'ingredient_name', message: 'ชื่อวัตถุดิบนี้มีอยู่แล้ว' }]
+        },
+        { status: 400 }
+      );
+    }
+
     // Insert new ingredient
     const result = await queryDbSingle<IngredientRow>(
       `INSERT INTO ingredient (ingredient_name, unit_of_measure, is_available, create_datetime, update_datetime)

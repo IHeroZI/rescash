@@ -130,11 +130,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <Header title="Dashboard" backHref="/admin/staff-management" showNotificationIcon={true} />
+      <Header title="Dashboard" backHref="/more" showNotificationIcon={true} />
 
       <div className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-6 pb-6">
         {/* Year Selector */}
-        <div className="bg-white p-4 rounded-lg border">
+        <div className="bg-white">
           <label className="block text-sm font-medium text-gray-700 mb-2">เลือกปี</label>
           <select
             value={selectedYear}
@@ -152,50 +152,50 @@ export default function AdminDashboard() {
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-4">
           {/* Total Revenue */}
-          <div className="bg-gradient-to-br from-green-500 to-green-600 p-4 rounded-lg text-white shadow-lg">
+          <div className="bg-white p-4 rounded-lg border-2 border-green-500 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-2">
-              <DollarSign size={24} />
-              <TrendingUp size={20} />
+              <DollarSign size={24} className="text-green-500" />
+              <TrendingUp size={20} className="text-green-500" />
             </div>
-            <p className="text-sm opacity-90">รายรับทั้งหมด</p>
-            <p className="text-2xl font-bold">฿{stats.totalRevenue.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</p>
-            <p className="text-xs opacity-75 mt-1">{stats.completedOrderCount} ออร์เดอร์</p>
+            <p className="text-sm text-gray-600">รายรับทั้งหมด</p>
+            <p className="text-2xl font-bold text-green-600">฿{stats.totalRevenue.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</p>
+            <p className="text-xs text-gray-500 mt-1">{stats.completedOrderCount} ออร์เดอร์</p>
           </div>
 
           {/* Total Expenses */}
-          <div className="bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-lg text-white shadow-lg">
+          <div className="bg-white p-4 rounded-lg border-2 border-red-500 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-2">
-              <Package size={24} />
-              <TrendingDown size={20} />
+              <Package size={24} className="text-red-500" />
+              <TrendingDown size={20} className="text-red-500" />
             </div>
-            <p className="text-sm opacity-90">รายจ่ายทั้งหมด</p>
-            <p className="text-2xl font-bold">฿{stats.totalExpenses.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</p>
-            <p className="text-xs opacity-75 mt-1">จากการจัดซื้อ</p>
+            <p className="text-sm text-gray-600">รายจ่ายทั้งหมด</p>
+            <p className="text-2xl font-bold text-red-600">฿{stats.totalExpenses.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</p>
+            <p className="text-xs text-gray-500 mt-1">จากการจัดซื้อ</p>
           </div>
 
           {/* Total Profit */}
-          <div className={`bg-gradient-to-br ${stats.totalProfit >= 0 ? "from-blue-500 to-blue-600" : "from-orange-500 to-orange-600"} p-4 rounded-lg text-white shadow-lg`}>
+          <div className={`bg-white p-4 rounded-lg border-2 ${stats.totalProfit >= 0 ? "border-blue-500" : "border-orange-500"} shadow-sm hover:shadow-md transition-shadow`}>
             <div className="flex items-center justify-between mb-2">
-              <Activity size={24} />
-              {stats.totalProfit >= 0 ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+              <Activity size={24} className={stats.totalProfit >= 0 ? "text-blue-500" : "text-orange-500"} />
+              {stats.totalProfit >= 0 ? <TrendingUp size={20} className="text-blue-500" /> : <TrendingDown size={20} className="text-orange-500" />}
             </div>
-            <p className="text-sm opacity-90">กำไรสุทธิ</p>
-            <p className="text-2xl font-bold">
+            <p className="text-sm text-gray-600">กำไรสุทธิ</p>
+            <p className={`text-2xl font-bold ${stats.totalProfit >= 0 ? "text-blue-600" : "text-orange-600"}`}>
               {stats.totalProfit >= 0 ? "฿" : "-฿"}
               {Math.abs(stats.totalProfit).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-xs opacity-75 mt-1">Margin: {profitMargin}%</p>
+            <p className="text-xs text-gray-500 mt-1">Margin: {profitMargin}%</p>
           </div>
 
           {/* Total Orders */}
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4 rounded-lg text-white shadow-lg">
+          <div className="bg-white p-4 rounded-lg border-2 border-purple-500 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-2">
-              <ShoppingCart size={24} />
-              <Activity size={20} />
+              <ShoppingCart size={24} className="text-purple-500" />
+              <Activity size={20} className="text-purple-500" />
             </div>
-            <p className="text-sm opacity-90">จำนวนออร์เดอร์</p>
-            <p className="text-2xl font-bold">{stats.orderCount}</p>
-            <p className="text-xs opacity-75 mt-1">สำเร็จ: {stats.completedOrderCount}</p>
+            <p className="text-sm text-gray-600">จำนวนออร์เดอร์</p>
+            <p className="text-2xl font-bold text-purple-600">{stats.orderCount}</p>
+            <p className="text-xs text-gray-500 mt-1">สำเร็จ: {stats.completedOrderCount}</p>
           </div>
         </div>
 

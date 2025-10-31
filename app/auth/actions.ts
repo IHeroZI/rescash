@@ -7,16 +7,48 @@ export async function signIn(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
+  // Validate password is not empty
+  if (!password || password.trim().length === 0) {
+    return { 
+      errors: { 
+        password: "กรุณากรอกรหัสผ่าน",
+        email: ""
+      } 
+    };
+  }
+
   const supabase = await createClient();
 
+  // Check if email exists in database
+  const { data: existingUser } = await supabase
+    .from("users")
+    .select("email")
+    .eq("email", email)
+    .single();
+
+  if (!existingUser) {
+    return { 
+      errors: { 
+        email: "ไม่พบบัญชีที่ใช้อีเมลนี้",
+        password: ""
+      } 
+    };
+  }
+
+  // Try to sign in with Supabase Auth
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
-  console.log("Sign-in error:", error);
 
   if (error) {
-    return { error: "กรุณาตรวจสอบอีเมลหรือรหัสผ่านอีกครั้ง" };
+    // If sign-in failed, it's because of wrong password
+    return { 
+      errors: { 
+        password: "รหัสผ่านไม่ถูกต้อง",
+        email: ""
+      } 
+    };
   }
 
   // Get user info to redirect based on role

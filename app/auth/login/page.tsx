@@ -5,22 +5,23 @@ import { Mail } from "lucide-react";
 import { useState } from "react";
 import TextField from "@/components/common/TextField";
 import PasswordTextField from "@/components/common/PasswordTextField";
+import ErrorLabel from "@/components/common/ErrorLabel";
 import { signIn } from "../actions";
 
 export default function LoginPage() {
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
+    setErrors({});
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
     const result = await signIn(formData);
 
-    if (result?.error) {
-      setError(result.error);
+    if (result?.errors) {
+      setErrors(result.errors);
       setLoading(false);
     }
   }
@@ -43,25 +44,28 @@ export default function LoginPage() {
           <h2 className="text-3xl font-bold text-gray-800 text-center mb-1 pt-6">ยินดีต้อนรับกลับมา</h2>
           <p className="text-lg text-gray-500 text-center mb-6 pb-8">ล็อกอินเข้าสู่บัญชีของคุณ</p>
           
-          {error && (
-            <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
-              {error}
-            </div>
-          )}
-          
           <div className="space-y-4">
-            <TextField
-              type="email"
-              name="email"
-              placeholder="อีเมล"
-              icon={<Mail size={20} />}
-              required
-            />
-            <PasswordTextField
-              name="password"
-              placeholder="รหัสผ่าน"
-              required
-            />
+            <div>
+              <TextField
+                type="email"
+                name="email"
+                placeholder="อีเมล"
+                icon={<Mail size={20} />}
+                required
+                error={!!errors.email}
+              />
+              <ErrorLabel message={errors.email} />
+            </div>
+            
+            <div>
+              <PasswordTextField
+                name="password"
+                placeholder="รหัสผ่าน"
+                required
+                error={!!errors.password}
+              />
+              <ErrorLabel message={errors.password} />
+            </div>
             
             <div className="pb-12 px-2" /> 
             
