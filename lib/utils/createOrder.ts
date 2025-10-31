@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 import { generatePublicOrderId } from "./orderUtils";
 import { generatePromptPayQR } from "./qrCodeGenerator";
 import { notifyOrderStatusChange } from "./notificationUtils";
+import { getThailandDateISO } from "./dateUtils";
 
 export interface CartItem {
   menu_id: number;
@@ -53,6 +54,9 @@ export async function createOrder(data: CreateOrderData): Promise<number> {
       data: { publicUrl: qrUrl },
     } = supabase.storage.from("images").getPublicUrl(qrFilePath);
 
+    // Get Thailand timezone datetime
+    const thailandNow = getThailandDateISO();
+
     // Create order
     const { data: orderData, error: orderError } = await supabase
       .from("order")
@@ -64,8 +68,8 @@ export async function createOrder(data: CreateOrderData): Promise<number> {
         appointment_time: data.appointment_time,
         notes: data.notes || null,
         qr_url: qrUrl,
-        create_datetime: new Date().toISOString(),
-        update_datetime: new Date().toISOString(),
+        create_datetime: thailandNow,
+        update_datetime: thailandNow,
       })
       .select()
       .single();

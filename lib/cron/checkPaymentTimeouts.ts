@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notifyOrderStatusChange } from "@/lib/utils/notificationUtils";
+import { getThailandDate, getThailandDateISO, parseThailandDate } from "@/lib/utils/dateUtils";
 
 export async function checkPaymentTimeouts() {
   const supabase = await createClient();
@@ -13,12 +14,12 @@ export async function checkPaymentTimeouts() {
 
     if (error) throw error;
 
-    const now = new Date();
+    const now = getThailandDate();
     const ordersToCancel: number[] = [];
 
     // Check each order
     for (const order of orders || []) {
-      const appointmentTime = new Date(order.appointment_time);
+      const appointmentTime = parseThailandDate(order.appointment_time);
       const paymentDeadline = new Date(appointmentTime.getTime() - 12 * 60 * 60 * 1000);
 
       // If deadline passed, mark for cancellation
@@ -33,7 +34,7 @@ export async function checkPaymentTimeouts() {
         .from("order")
         .update({
           order_status: "payment_timeout",
-          update_datetime: now.toISOString(),
+          update_datetime: getThailandDateISO(),
         })
         .in("order_id", ordersToCancel);
 

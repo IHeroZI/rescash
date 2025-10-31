@@ -5,6 +5,7 @@ import Modal from "@/components/common/Modal";
 import { Plus, X } from "lucide-react";
 import { usePurchaseStore } from "@/lib/store/purchaseStore";
 import { useIngredients } from "@/lib/hooks/useIngredients";
+import { getThailandDateISO } from "@/lib/utils/dateUtils";
 import toast from "react-hot-toast";
 
 interface PurchaseFormModalProps {
@@ -25,7 +26,7 @@ export default function PurchaseFormModal({
   const { items, addItem, updateItem, removeItem, clearItems, getTotalAmount } = usePurchaseStore();
   const { ingredients } = useIngredients();
   const [notes, setNotes] = useState("");
-  const [purchaseDate, setPurchaseDate] = useState<string>(new Date().toISOString());
+  const [purchaseDate, setPurchaseDate] = useState<string>(getThailandDateISO());
   const [saving, setSaving] = useState(false);
 
   // Current item being added

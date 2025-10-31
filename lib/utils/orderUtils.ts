@@ -1,22 +1,23 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { getThailandDate, getThailandStartOfDay, getThailandEndOfDay, toThailandISO } from "./dateUtils";
 
 export async function generatePublicOrderId(supabase: SupabaseClient): Promise<string> {
-  // Get current date in YYYYMMDD format
-  const now = new Date();
+  // Get current date in Thailand timezone in YYYYMMDD format
+  const now = getThailandDate();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   const dateStr = `${year}${month}${day}`;
 
-  // Query today's orders to get the count
-  const startOfDay = new Date(year, now.getMonth(), now.getDate(), 0, 0, 0);
-  const endOfDay = new Date(year, now.getMonth(), now.getDate(), 23, 59, 59);
+  // Query today's orders to get the count (using Thailand timezone)
+  const startOfDay = getThailandStartOfDay();
+  const endOfDay = getThailandEndOfDay();
 
   const { count, error } = await supabase
     .from('order')
     .select('*', { count: 'exact', head: true })
-    .gte('create_datetime', startOfDay.toISOString())
-    .lte('create_datetime', endOfDay.toISOString());
+    .gte('create_datetime', toThailandISO(startOfDay))
+    .lte('create_datetime', toThailandISO(endOfDay));
 
   if (error) {
     console.log('Error counting orders:', error);

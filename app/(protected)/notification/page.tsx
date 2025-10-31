@@ -6,6 +6,7 @@ import { useNotifications } from "@/lib/hooks/useNotifications";
 import Header from "@/components/common/Header";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { parseThailandDate, formatThailandDate } from "@/lib/utils/dateUtils";
 
 export default function NotificationPage() {
   const [userId, setUserId] = useState<number | null>(null);
@@ -120,7 +121,7 @@ export default function NotificationPage() {
                         {notification.message}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(notification.create_datetime).toLocaleString("th-TH", {
+                        {formatThailandDate(parseThailandDate(notification.create_datetime), {
                           year: "numeric",
                           month: "short",
                           day: "numeric",

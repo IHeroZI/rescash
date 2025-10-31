@@ -1,4 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { formatThailandDate, parseThailandDate } from "./dateUtils";
 
 /**
  * ระบบแจ้งเตือนสำหรับ ResCash
@@ -94,7 +95,8 @@ function generateNotificationMessage(
   const orderNumber = orderInfo.public_order_id;
   const customerName = orderInfo.customer_name;
   const amount = orderInfo.total_amount.toFixed(2);
-  const appointmentTime = new Date(orderInfo.appointment_time).toLocaleString("th-TH", {
+  const appointmentDate = parseThailandDate(orderInfo.appointment_time);
+  const appointmentTime = formatThailandDate(appointmentDate, {
     dateStyle: "medium",
     timeStyle: "short",
   });

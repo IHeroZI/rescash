@@ -9,6 +9,8 @@ export interface ValidationResult {
   errors: ValidationError[];
 }
 
+import { parseThailandDate } from "@/lib/utils/dateUtils";
+
 // Helper functions
 export function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -195,7 +197,7 @@ export function validateOrder(data: OrderValidationData, isUpdate = false): Vali
     if (!data.appointment_time) {
       errors.push({ field: 'appointment_time', message: 'กรุณาระบุเวลานัดรับ' });
     } else {
-      const appointmentDate = new Date(data.appointment_time);
+      const appointmentDate = parseThailandDate(data.appointment_time);
       if (isNaN(appointmentDate.getTime())) {
         errors.push({ field: 'appointment_time', message: 'รูปแบบเวลาไม่ถูกต้อง' });
       }
@@ -248,7 +250,7 @@ export function validatePurchase(data: PurchaseValidationData, isUpdate = false)
     if (!data.purchase_datetime) {
       errors.push({ field: 'purchase_datetime', message: 'กรุณาระบุวันที่ซื้อ' });
     } else {
-      const purchaseDate = new Date(data.purchase_datetime);
+      const purchaseDate = parseThailandDate(data.purchase_datetime);
       if (isNaN(purchaseDate.getTime())) {
         errors.push({ field: 'purchase_datetime', message: 'รูปแบบวันที่ไม่ถูกต้อง' });
       }
