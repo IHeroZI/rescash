@@ -1,6 +1,7 @@
 import "./globals.css";
 import { type Metadata } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "RESCASH",
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="th" className={noto_sans_thai.variable}>
       <body className={`${noto_sans_thai.className} flex justify-center items-center min-h-screen bg-gray-100`}>
+        <Toaster position="top-center" />
         <div className="relative w-full max-w-sm h-screen overflow-hidden shadow-lg bg-white">
           {children}
         </div>

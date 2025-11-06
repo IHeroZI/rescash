@@ -2,10 +2,45 @@
 
 import Link from "next/link";
 import { Mail } from "lucide-react";
+import { useState } from "react";
 import TextField from "@/components/common/TextField";
 import PasswordTextField from "@/components/common/PasswordTextField";
+import ErrorLabel from "@/components/common/ErrorLabel";
+import { signIn } from "../actions";
+import { validateLogin } from "@/lib/validation/validationSchemas";
 
 export default function LoginPage() {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErrors({});
+
+    // Client-side validation
+    const validation = validateLogin({ email, password });
+    if (!validation.isValid) {
+      const errorMap: Record<string, string> = {};
+      validation.errors.forEach((error) => {
+        errorMap[error.field] = error.message;
+      });
+      setErrors(errorMap);
+      return;
+    }
+
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await signIn(formData);
+
+    if (result?.errors) {
+      setErrors(result.errors);
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="relative flex min-h-screen flex-col bg-white">
       <div className="absolute inset-x-0 top-0 h-2/3 bg-cover bg-center" style={{ backgroundImage: "url('/images/bg-rescash.png')" }}></div>
@@ -20,37 +55,43 @@ export default function LoginPage() {
       </div> */}
       
       <div className="relative flex flex-1 flex-col items-center justify-end">
-        <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-lg">
+        <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-lg">
           <h2 className="text-3xl font-bold text-gray-800 text-center mb-1 pt-6">ยินดีต้อนรับกลับมา</h2>
           <p className="text-lg text-gray-500 text-center mb-6 pb-8">ล็อกอินเข้าสู่บัญชีของคุณ</p>
           
-          <div className="space-y-6">
-            <TextField
-              type="email"
-              placeholder="อีเมล"
-              icon={<Mail size={20} />}
-            />
-            <PasswordTextField
-              placeholder="รหัสผ่าน"
-            />
-            
-            <div className="flex items-center pb-10 px-2">
-              <input
-                id="remember"
-                name="remember"
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 accent-black text-white focus:ring-black"
+          <div className="space-y-4">
+            <div>
+              <TextField
+                type="email"
+                name="email"
+                placeholder="อีเมล"
+                icon={<Mail size={20} />}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                error={!!errors.email}
               />
-              <label htmlFor="remember" className="ml-2 block text-sm text-gray-900 pb-">
-                จดจำฉัน
-              </label>
+              <ErrorLabel message={errors.email} />
             </div>
+            
+            <div>
+              <PasswordTextField
+                name="password"
+                placeholder="รหัสผ่าน"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={!!errors.password}
+              />
+              <ErrorLabel message={errors.password} />
+            </div>
+            
+            <div className="pb-12 px-2" /> 
             
             <button
               type="submit"
-              className="w-full rounded-3xl bg-black py-3 text-white transition-colors duration-200 hover:bg-gray-800"
+              disabled={loading}
+              className="w-full rounded-3xl bg-black py-3 text-white transition-colors duration-200 hover:bg-gray-800 disabled:opacity-50"
             >
-              เข้าสู่ระบบ
+              {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
             </button>
           </div>
           
@@ -60,7 +101,7 @@ export default function LoginPage() {
               สร้างบัญชี
             </Link>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
